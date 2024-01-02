@@ -1,9 +1,12 @@
+require("dotenv").config();
 const express = require("express");
 const { handler } = require("./controller/index");
+const { initializeFirebaseApp } = require("./controller/lib/firebase");
 const PORT = process.env.PORT || 5000;
-require("dotenv").config();
+
 const app = express();
 app.use(express.json());
+initializeFirebaseApp();
 
 app.post("*", async (req, res) => {
   console.log("POST");
