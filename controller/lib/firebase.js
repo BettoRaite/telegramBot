@@ -1,5 +1,6 @@
 const { initializeApp } = require("firebase/app");
 const { errorHandler } = require("./helpers");
+const { SUBJECT_NAMES } = require("./constants");
 const {
   getFirestore,
   doc,
@@ -50,6 +51,16 @@ const initializeFirebaseApp = () => {
   and I create three docs under it like date1, date2,date3
 
 */
+const initFirestoreDb = async () => {
+  try {
+    for (const subject of SUBJECT_NAMES) {
+      const subjectsRef = collection(firestoreDb, COLLECTION_NAME);
+      await setDoc(doc(subjectsRef, subject), {});
+    }
+  } catch (error) {
+    errorHandler(error, "firebase-initFirestoreDb");
+  }
+};
 const createSubjectDoc = async (subjectName) => {
   try {
     const subjectsRef = collection(firestoreDb, COLLECTION_NAME);
@@ -92,6 +103,7 @@ const getFirebaseApp = () => app;
 
 module.exports = {
   initializeFirebaseApp,
+  initFirestoreDb,
   getFirebaseApp,
   uploadProccessedData,
   getData,
