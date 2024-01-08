@@ -25,6 +25,7 @@ const SUBJECT_NAMES = [
 ];
 const UPLOAD_BTN_NAME = "upload-homework";
 const GET_BTN_NAME = "get-homework";
+
 module.exports = {
   SUBJECT_NAMES,
   INTRODUCTION_TEXT,

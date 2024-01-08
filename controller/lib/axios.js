@@ -20,4 +20,5 @@ function getAxiosInstance(BASE_URL, headers = {}) {
     },
   };
 }
+
 module.exports = { getAxiosInstance };

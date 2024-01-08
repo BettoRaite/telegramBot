@@ -1,6 +1,8 @@
 const { initializeApp } = require("firebase/app");
 const { errorHandler } = require("./helpers");
 const { SUBJECT_NAMES } = require("./constants");
+const { getStorage, ref, uploadBytes } = require("firebase/storage");
+
 const {
   getFirestore,
   doc,
@@ -36,11 +38,13 @@ const firebaseConfig = {
 
 let app;
 let firestoreDb;
+let storage;
 const COLLECTION_NAME = "subjects";
 const initializeFirebaseApp = () => {
   try {
     app = initializeApp(firebaseConfig);
     firestoreDb = getFirestore();
+    storage = getStorage();
     return app;
   } catch (error) {
     errorHandler(error, "firebase-initializeFirebaseApp");
@@ -61,21 +65,13 @@ const initFirestoreDb = async () => {
     errorHandler(error, "firebase-initFirestoreDb");
   }
 };
-const createSubjectDoc = async (subjectName) => {
-  try {
-    const subjectsRef = collection(firestoreDb, COLLECTION_NAME);
-    const dataUpdated = await setDoc(doc(subjectsRef, subjectName));
-    return dataUpdated;
-  } catch (error) {
-    errorHandler(error, "firebase-createSubjectDoc");
-  }
-};
+
 const uploadProccessedData = async (subjectName, date, description) => {
   const dataToUpload = {
     [date]: description,
   };
   try {
-    console.log(date);
+    console.log(subjectName);
     const docRef = doc(firestoreDb, `${COLLECTION_NAME}/${subjectName}`);
     const dataUpdated = await updateDoc(docRef, dataToUpload, { merge: true });
     return dataUpdated;
@@ -83,6 +79,19 @@ const uploadProccessedData = async (subjectName, date, description) => {
     errorHandler(error, "firebase-uploadProcessedData");
   }
 };
+
+const uploadImage = async (imgFile, fileName) => {
+  try {
+    console.log("called uploadImage");
+    const imagesRef = ref(storage, `images/${fileName}`);
+    uploadBytes(imagesRef, imgFile).then((snapshot) => {
+      console.log("Uploaded a blob or file!");
+    });
+  } catch (error) {
+    errorHandler(error, "firebase-uploadImage");
+  }
+};
+
 const getData = async (subjectName) => {
   try {
     const docRef = doc(firestoreDb, COLLECTION_NAME, subjectName);
@@ -99,6 +108,7 @@ const getData = async (subjectName) => {
     errorHandler(error, "firebase-getData");
   }
 };
+
 const getFirebaseApp = () => app;
 
 module.exports = {
@@ -107,4 +117,5 @@ module.exports = {
   getFirebaseApp,
   uploadProccessedData,
   getData,
+  uploadImage,
 };

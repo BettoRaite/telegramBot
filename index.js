@@ -15,10 +15,12 @@ app.post("*", async (req, res) => {
   console.log("POST");
   res.send(await handler(req, "POST"));
 });
+
 app.get("*", async (req, res) => {
   console.log("GET");
   res.send(await handler(req, "GET"));
 });
+
 app.listen(PORT, function (err) {
   if (err) {
     console.log(err);
