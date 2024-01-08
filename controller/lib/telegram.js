@@ -17,6 +17,7 @@ const subjectHandler = new SubjectHandler();
 async function handleMessage(messageObj) {
   const messageText = messageObj.text ?? "";
   const images = messageObj.photo || messageObj.document;
+  console.log(images);
   if (!messageText && !images) {
     errorHandler("No message text", "handleMessage");
     return "";

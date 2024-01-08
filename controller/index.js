@@ -31,11 +31,7 @@ async function handler(req, method) {
         }
       }
       case "post":
-        console.log(
-          "------------------------------------------------------------------------BEGIN"
-        );
         console.log(req);
-        console.log("------------------------------------------------------------------------END");
         const callbackQuery = req.body.callback_query;
         if (callbackQuery) {
           return handleCallbackQuery(callbackQuery);
