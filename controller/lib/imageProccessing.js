@@ -1,22 +1,49 @@
 const { errorHandler } = require("./helpers");
 
-async function getLargestImgId(items) {
+function getLargestImageId(images) {
   try {
-    let largestSize = 0;
-    let largestItemId = "";
+    const imageMetadataArr = [];
+    // recursively getting all ids and size, independable of object structure
+    const extractMetadata = (items) => {
+      const metadata = {
+        file_id: null,
+        file_size: null,
+      };
+      // iterate through prop names
+      for (const prop in items) {
+        const val = items[prop]; // get value of prop
+        if (prop === "file_id" || prop === "file_size") {
+          metadata[prop] = val;
+        } else if (val instanceof Object) {
+          extractMetadata(val);
+        }
+      }
+      // iterated through all props
+      if (metadata.file_id !== null && metadata.file_size !== null) {
+        // check if file id and size exist, push to main arr
+        imageMetadataArr.push(metadata);
+      }
+    };
 
-    for (const item of items) {
-      const itemSize = item.file_size;
+    extractMetadata(images);
+    // Getting id of the image with largest size
+    let largestImageSize = 0;
+    let largestImageId = "";
 
-      if (itemSize > largestSize) {
-        largestSize = itemSize;
-        largestItemId = item.file_id;
+    for (const metadata of imageMetadataArr) {
+      const { file_size: imageSize, file_id: imageId } = metadata;
+      if (imageSize === null || imageId == null) {
+        throw TypeError("Invalid image metadata, missing values");
+      } else if (imageSize > largestImageSize) {
+        largestImageSize = imageSize;
+        largestImageId = imageId;
       }
     }
-    return largestItemId;
+    return largestImageId;
   } catch (error) {
-    errorHandler(error, "getLargestImgId");
+    errorHandler(error, "getLargestImageId");
+    return "";
   }
 }
 
-module.exports = { getLargestImgId };
+module.exports = { getLargestImageId };

@@ -1,5 +1,6 @@
 const { getAxiosInstance } = require("./axios");
-const { SUBJECT_NAMES, UPLOAD_BTN_NAME, GET_BTN_NAME, MAIN_MENU_TEXT } = require("./constants");
+const { errorHandler } = require("./helpers");
+const { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION, MAIN_MENU_TEXT } = require("./constants");
 
 const MY_TOKEN = process.env.BOT_TOKEN;
 const BASE_URL = `https://api.telegram.org/bot${MY_TOKEN}`;
@@ -17,14 +18,25 @@ function sendMessage(chatId, messageText, replyMarkup = {}) {
     });
 }
 
-function sendPhoto(chatId, imgId) {
+function sendPhoto(chatId, imageId) {
+  console.log(imageId);
   return axiosInstance
     .post("sendPhoto", {
       chat_id: chatId,
-      photo: imgId,
+      photo: imageId,
     })
     .catch((ex) => {
       errorHandler(ex, "sendPhoto", "axios");
+    });
+}
+function sendDoc(chatId, docId) {
+  return axiosInstance
+    .post("sendDocument", {
+      chat_id: chatId,
+      document: docId,
+    })
+    .catch((ex) => {
+      errorHandler(ex, "sendDocument", "axios");
     });
 }
 
@@ -45,25 +57,35 @@ function sendSubjectsOptionMenu(chatId) {
   }
 }
 
-function sendStartMenu(chatId, menuText = MAIN_MENU_TEXT) {
-  let optionalParams = {
-    reply_markup: {
-      resize_keyboard: true,
-      is_persistent: true,
-      force_reply: true,
-      selective: true,
-      keyboard: [["HI", "SHOW"]],
-    },
+function sendMenuCommands(chatId, menuText = MAIN_MENU_TEXT) {
+  let menu = {
+    resize_keyboard: true,
+    is_persistent: true,
+    force_reply: true,
+    selective: true,
+    keyboard: [["/continue - продолжить"]],
   };
+
+  return sendMessage(chatId, menuText, menu);
+}
+
+function sendStartMenu(chatId, menuText = MAIN_MENU_TEXT) {
   const replyMarkup = {
     inline_keyboard: [
       [
-        { text: "Получить дз", callback_data: GET_BTN_NAME },
-        { text: "Сохранить дз", callback_data: UPLOAD_BTN_NAME },
+        { text: "Получить дз", callback_data: GET_ACTION },
+        { text: "Сохранить дз", callback_data: UPLOAD_ACTION },
       ],
     ],
   };
-  return sendMessage(chatId, menuText, optionalParams);
+  return sendMessage(chatId, menuText, replyMarkup);
 }
 
-module.exports = { sendMessage, sendPhoto, sendSubjectsOptionMenu, sendStartMenu };
+module.exports = {
+  sendMessage,
+  sendPhoto,
+  sendSubjectsOptionMenu,
+  sendStartMenu,
+  sendMenuCommands,
+  sendDoc,
+};

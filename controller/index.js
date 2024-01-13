@@ -1,37 +1,26 @@
 const { errorHandler } = require("./lib/helpers");
 const { handleMessage } = require("./lib/telegram");
-const { sendMessage, sendSubjectsOptionMenu } = require("./lib/send");
+const { sendMessage, sendSubjectsOptionMenu, sendStartMenu } = require("./lib/send");
 const { uploadProccessedData, getData } = require("./lib/firebase");
-const { subjectHandler } = require("./lib/telegram");
+const { setAction, setSubject, getUser, deleteUserAfter } = require("./lib/utils/user");
 
 const {
   SUBJECT_NAMES,
-  UPLOAD_BTN_NAME,
-  GET_BTN_NAME,
   HOMEWORK_UPLOAD_MESSAGE,
+  UPLOAD_ACTION,
+  GET_ACTION,
 } = require("./lib/constants");
-
+D;
 async function handler(req, method) {
   try {
-    const methodLowCase = method.toLowerCase();
+    const GET_METHOD = "GET";
+    const POST_METHOD = "POST";
 
-    switch (methodLowCase) {
-      case "get": {
+    switch (method) {
+      case GET_METHOD:
         const path = req.path;
-
-        switch (path) {
-          case "/test-upload":
-            await uploadProccessedData();
-            return "success";
-          case "/test-get":
-            const data = await getData("math");
-            return JSON.stringify(data, null, 4);
-          default:
-            return "Hi!";
-        }
-      }
-      case "post":
-        console.log(req);
+        return handleGet(path);
+      case POST_METHOD:
         const callbackQuery = req.body.callback_query;
         if (callbackQuery) {
           return handleCallbackQuery(callbackQuery);
@@ -43,54 +32,117 @@ async function handler(req, method) {
     if (body && body.message) {
       const messageObj = body.message;
       await handleMessage(messageObj);
-      return "Success";
+      return "Message received successfully";
     }
     return "Unknown request";
   } catch (error) {
     errorHandler(error, "mainIndexHandler");
   }
 }
-function handleCallbackQuery(callbackQuery) {
+async function handleGet(path) {
+  switch (path) {
+    case "/test-upload":
+      await uploadProccessedData(SUBJECT_NAMES[0], 1, "I said it works");
+      return "Data uploaded successfully";
+    case "/test-get":
+      const data = await getData(SUBJECT_NAMES[0]);
+      return JSON.stringify(data, null, 4);
+    default:
+      return "Telegram bot server - Sonya.js";
+  }
+}
+async function handleCallbackQuery(callbackQuery) {
   try {
-    const data = callbackQuery.data;
-    const chatId = callbackQuery.message.chat.id;
-    /*
-  GET ACTION
-  SUBJECT NAME  ---> INCLUDED
+    const userQueryName = callbackQuery.data;
+    const chatId = String(callbackQuery.message.chat.id);
+    const ACTIONS = new Set([UPLOAD_ACTION, GET_ACTION]);
 
-*/
-    switch (data) {
-      case UPLOAD_BTN_NAME:
-        subjectHandler.setAction(UPLOAD_BTN_NAME);
-        sendSubjectsOptionMenu(chatId);
-        return "callback-query-upload";
-      default:
-        if (SUBJECT_NAMES.includes(data)) {
-          const subjectName = data;
-          const method = subjectHandler.getAction();
-          subjectHandler.setSubject(subjectName);
+    if (ACTIONS.has(userQueryName)) {
+      const resetTimeSec = 5 * 60;
+      setAction(chatId, userQueryName);
+      // calling reset user, if case the user doesn't send any message
+      deleteUserAfter(chatId, resetTimeSec);
+      sendSubjectsOptionMenu(chatId);
+      console.log(`${userQueryName} action`);
 
-          switch (method) {
-            case UPLOAD_BTN_NAME:
-              sendMessage(chatId, HOMEWORK_UPLOAD_MESSAGE);
-              break;
-            // case GET_BTN_NAME:
-            //   messageObj = { chat: { id: chatId }, text: "get" };
-            //   handleMessage(messageObj);
-            //   break;
-          }
-        }
+      return `handled callback query ${userQueryName}`;
+    } else if (SUBJECT_NAMES.includes(userQueryName)) {
+      const { action } = getUser(chatId) ?? {};
+
+      if (action === UPLOAD_ACTION) {
+        // preparing for data upload, along with the location
+        const user = setSubject(chatId, userQueryName);
+        console.log(user, "SET SUBJECT " + userQueryName);
+        sendMessage(chatId, HOMEWORK_UPLOAD_MESSAGE);
+        return;
+      } else if (action === GET_ACTION) {
+        // preparing for sending data and the locatiion of data
+        const user = setSubject(chatId, userQueryName);
+        console.log(user, "SET SUBJECT " + userQueryName);
+        const messageObj = {
+          chat: {
+            id: chatId,
+          },
+          text: "get",
+          date: 0,
+        };
+        handleMessage(messageObj);
+        return `handled callback query ${userQueryName}`;
+      }
+
+      sendMessage(chatId, "Упсс...сперва нужно выбрать действие");
+      sendStartMenu(chatId);
+      return;
     }
   } catch (error) {
     errorHandler(error, "handleCallbackQuery");
   }
-  //   case GET_BTN_NAME:
-  //     subjectHandler.setMethod(GET_BTN_NAME);
-  //     sendSubjectsOptionMenu(chatId);
-  //     return "callback-query-get";
-
-  //     return "callback-query-selected-subject";
-  // }
 }
 
 module.exports = { handler };
+/*
+switch (userQueryName) {
+      case UPLOAD_ACTION:
+        // setting action for the current user, also starting delete user clock(in case no message appears)
+        console.log(setAction(chatId, UPLOAD_ACTION), "UPLOAD action");
+        // sending subject options
+        sendSubjectsOptionMenu(chatId);
+        return "handled callback query UPLOAD";
+      case GET_ACTION:
+        // setting action for the current user, also starting delete user clock(in case no message appears)
+        console.log(setAction(chatId, GET_ACTION), "GET action");
+        // sending subject options
+        sendSubjectsOptionMenu(chatId);
+        return "handled callback query GET";
+      default:
+        const { action } = getUser(chatId) ?? {};
+        if (action === undefined) {
+          errorHandler("user object is undefined", "handleCallbackQuery");
+        }
+
+        if (SUBJECT_NAMES.includes(userQueryName) && action) {
+          if (action === UPLOAD_ACTION) {
+            // preparing for data upload, along with the location
+            const user = setSubject(chatId, userQueryName);
+            console.log(user, "SET SUBJECT " + userQueryName);
+            sendMessage(chatId, HOMEWORK_UPLOAD_MESSAGE);
+          } else if (action === GET_ACTION) {
+            // preparing for sending data and the locatiion of data
+            const user = setSubject(chatId, userQueryName);
+            console.log(user, "SET SUBJECT " + userQueryName);
+            const messageObj = {
+              chat: {
+                id: chatId,
+              },
+              text: "get",
+            };
+            handleMessage(messageObj);
+          }
+
+          return "handled callback query SUBJECTS";
+        }
+        await sendMessage(chatId, "Упсс...сперва нужно выбрать действие");
+        sendStartMenu(chatId);
+    }
+
+*/

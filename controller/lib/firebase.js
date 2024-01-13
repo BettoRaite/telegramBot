@@ -66,9 +66,9 @@ const initFirestoreDb = async () => {
   }
 };
 
-const uploadProccessedData = async (subjectName, date, description) => {
+const uploadProccessedData = async (subjectName, id, data) => {
   const dataToUpload = {
-    [date]: description,
+    [id]: data,
   };
   try {
     console.log(subjectName);
@@ -80,15 +80,18 @@ const uploadProccessedData = async (subjectName, date, description) => {
   }
 };
 
-const uploadImage = async (imgFile, fileName) => {
+const uploadImageId = async (subjectName, imageId) => {
+  const number = Math.floor(Math.random() * (10 - 0) + 0);
+  const dataToUpload = {
+    ["photo" + number]: imageId,
+  };
   try {
-    console.log("called uploadImage");
-    const imagesRef = ref(storage, `images/${fileName}`);
-    uploadBytes(imagesRef, imgFile).then((snapshot) => {
-      console.log("Uploaded a blob or file!");
-    });
+    console.log("adsasd");
+    const docRef = doc(firestoreDb, `${COLLECTION_NAME}/${subjectName}`);
+    const dataUpdated = await updateDoc(docRef, dataToUpload, { merge: true });
+    return dataUpdated;
   } catch (error) {
-    errorHandler(error, "firebase-uploadImage");
+    errorHandler(error, "firebase-uploadImgId");
   }
 };
 
@@ -117,5 +120,5 @@ module.exports = {
   getFirebaseApp,
   uploadProccessedData,
   getData,
-  uploadImage,
+  uploadImageId,
 };

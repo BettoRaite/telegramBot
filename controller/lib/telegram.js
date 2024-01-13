@@ -1,57 +1,64 @@
 const { errorHandler } = require("./helpers");
-const { SubjectHandler } = require("./subjectHandler");
-const { uploadProccessedData, getData } = require("./firebase");
-const { sendMessage, sendPhoto, sendSubjectsOptionMenu, sendStartMenu } = require("./send");
-const { getLargestImgId } = require("./imageProccessing");
+const { uploadProccessedData, getData, uploadImageId } = require("./firebase");
+const { sendMessage, sendStartMenu, sendMenuCommands, sendDoc, sendPhoto } = require("./send");
+const { getLargestImageId } = require("./imageProccessing");
+const { getUser, deleteUser, setImageProccessingToTrue, getResetKey } = require("./utils/user");
+const { getDate, getLocalUnixTimestamp } = require("./date");
+
 const {
   INTRODUCTION_TEXT,
+  UPLOAD_ACTION,
+  GET_ACTION,
   SUBJECT_NAMES,
-  UPLOAD_BTN_NAME,
-  GET_BTN_NAME,
+  CANCEL_OPERATION_SUCCESS_MESSAGE,
+  CANCEL_OPERATION_ERROR_MESSAGE,
   UPLOAD_SUCCESS_MESSAGE,
-  MAIN_MENU_TEXT,
+  ERROR_DOC_UPLOAD,
 } = require("./constants");
-
-const subjectHandler = new SubjectHandler();
 
 async function handleMessage(messageObj) {
   const messageText = messageObj.text ?? "";
-  const images = messageObj.photo || messageObj.document;
-  console.log(images);
-  if (!messageText && !images) {
+  const images = messageObj.photo;
+  const imageDoc = messageObj.document;
+
+  if (!messageText && !images && !imageDoc) {
     errorHandler("No message text", "handleMessage");
     return "";
   }
+
   try {
-    const chatId = messageObj.chat.id;
-    if (images) {
-      const imgId = String(getLargestImgId(images));
-      subjectHandler.addImgId(imgId);
-    }
+    const chatId = String(messageObj.chat.id);
+    const user = getUser(chatId) ?? {};
 
-    if (messageText.charAt(0) === "/") {
+    if (user.isImageProccessing && messageText) {
+      // user typed text while the images were being proccessed.
+      sendMessage(chatId, "huhuhuhuhuhuh if you can imagine then you can make it.");
+      deleteUser(chatId);
+      return sendMenuCommands(chatId);
+    }
+    if (messageText.startsWith("/")) {
       const command = messageText.slice(1).toLowerCase();
-      switch (command) {
-        case "cancel":
-          if (subjectHandler.getSubject()) {
-            subjectHandler.reset();
-            await sendMessage(chatId, "Операция была отменена 👍");
-          } else {
-            await sendMessage(chatId, "Нечего отменять😐");
-          }
-          return sendStartMenu(chatId, "Опции");
-        case "start":
-          await sendMessage(chatId, INTRODUCTION_TEXT);
-          return sendStartMenu(chatId, "Опции");
-      }
+      return handleCommand(chatId, command, user);
     }
 
-    const action = subjectHandler.getAction();
+    if (user.action && user.subjectName) {
+      if (imageDoc) {
+        sendMessage(chatId, ERROR_DOC_UPLOAD);
+        return null;
+      }
+      const imageId = getLargestImageId(images);
+      const unixTimestamp = messageObj.date;
+      const params = {
+        chatId,
+        subjectName: user.subjectName,
+        action: user.action,
+        resetKey: user.resetKey,
+        messageText,
+        imageId,
+        unixTimestamp,
+      };
 
-    if (action) {
-      const dateInSeconds = messageObj.date;
-
-      return handleAction(action, chatId, dateInSeconds);
+      return handleAction(params);
     }
 
     sendMessage(
@@ -65,55 +72,92 @@ async function handleMessage(messageObj) {
     errorHandler(error, "handleMessage");
   }
 }
+async function handleCommand(chatId, command, user) {
+  const action = user.action;
 
-function getDate(dateInSeconds) {
-  const MIN_DAY = 10;
-  const MIN_MONTH = 10;
-  const dateInMilliseconds = dateInSeconds * 1000;
-  const date = new Date(dateInMilliseconds);
-  const day = Number(date.getDay());
-  const month = Number(date.getMonth()) + 1;
-  const year = Number(date.getFullYear());
-  console.log(day);
-  return `${day < MIN_DAY ? "0" + day : day}-${month < MIN_MONTH ? "0" + month : month}-${year}`;
-}
-
-async function handleAction(action, chatId, dateInSeconds, messageText) {
-  console.log("called handle action");
-  try {
-    switch (action) {
-      case UPLOAD_BTN_NAME: {
-        const subjectName = subjectHandler.getSubject();
-        subjectHandler.reset();
-
-        if (SUBJECT_NAMES.includes(subjectName)) {
-          const date = getDate(dateInSeconds);
-          await uploadProccessedData(subjectName, date, messageText);
-          await sendMessage(chatId, UPLOAD_SUCCESS_MESSAGE);
-          return sendStartMenu(chatId);
-        }
-        throw new Error("Invalid subject name encountered");
+  switch (command) {
+    case "cancel":
+      if (action) {
+        // deleting user obj and cleanig users map
+        deleteUser(chatId);
+        await sendMessage(chatId, CANCEL_OPERATION_SUCCESS_MESSAGE);
+      } else {
+        await sendMessage(chatId, CANCEL_OPERATION_ERROR_MESSAGE);
       }
-
-      case GET_BTN_NAME: {
-        const subjectName = subjectHandler.getSubject();
-        subjectHandler.reset();
-        if (SUBJECT_NAMES.includes(subjectName)) {
-          const homeworkDataObj = await getData(subjectName);
-          const homeworkDataMessage = JSON.stringify(homeworkDataObj);
-          await sendMessage(chatId, homeworkDataMessage);
-          return sendStartMenu(chatId);
-        }
-        throw new Error("Invalid subject name encountered");
-      }
-      default:
-        throw new Error("Undefined action");
-    }
-  } catch (error) {
-    errorHandler(error, "handleaction");
+      return sendStartMenu(chatId, "Опции");
+    case "start":
+      await sendMessage(chatId, INTRODUCTION_TEXT);
+      return sendStartMenu(chatId, "Опции");
+    case "continue":
+      await sendStartMenu(chatId);
+      return sendStartMenu(chatId, "Опции");
   }
 }
+async function handleAction(params) {
+  const { chatId, subjectName, action, resetKey, messageText, imageId, unixTimestamp } = params;
+
+  const timeZoneDiffsec = 5 * 3600;
+  const date = getDate(getLocalUnixTimestamp(timeZoneDiffsec, unixTimestamp));
+  const strDate = date.strDate;
+
+  switch (action) {
+    case UPLOAD_ACTION: {
+      if (SUBJECT_NAMES.includes(subjectName)) {
+        if (messageText) {
+          handleTextDataUpload(chatId, subjectName, strDate, messageText);
+          return;
+        } else if (imageId) {
+          handleImageUpload(chatId, subjectName, imageId, resetKey);
+        }
+      }
+      errorHandler("Invalid subject name encountered", "handleAction");
+      return;
+    }
+
+    case GET_ACTION: {
+      deleteUser(chatId);
+      return handleDataRetrival(chatId, subjectName);
+    }
+    default:
+      throw new Error("Undefined action");
+  }
+}
+async function handleDataRetrival(chatId, subjectName) {
+  const data = await getData(subjectName);
+  if (data) {
+    for (const propName in data) {
+      if (propName.includes("24")) {
+        await sendMessage(chatId, data[propName]);
+      } else if (propName.includes("photo")) {
+        await sendPhoto(chatId, data[propName]);
+      }
+    }
+    return sendStartMenu(chatId);
+  }
+}
+async function handleTextDataUpload(chatId, subjectName, strDate, messageText) {
+  await uploadProccessedData(subjectName, strDate, messageText);
+
+  deleteUser(chatId);
+  sendMessage(chatId, UPLOAD_SUCCESS_MESSAGE);
+
+  return sendStartMenu(chatId);
+}
+async function handleImageUpload(chatId, subjectName, imageId, resetKey) {
+  await uploadProccessedData(subjectName, "photo", imageId);
+
+  setImageProccessingToTrue(chatId);
+  setTimeout(() => {
+    console.log("RUN RESET");
+    if (resetKey === getResetKey(chatId)) {
+      deleteUser(chatId);
+      return;
+    }
+    return;
+  }, 1000 * 5);
+  return sendMessage(chatId, "IMG FILE IT'S GOOOD");
+}
+
 module.exports = {
   handleMessage,
-  subjectHandler,
 };
