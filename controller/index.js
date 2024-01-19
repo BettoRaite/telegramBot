@@ -1,16 +1,12 @@
 const { errorHandler } = require("./lib/helpers");
-const { handleMessage } = require("./lib/telegram");
+const { handleMessage, handleAction } = require("./lib/telegram");
 const { sendMessage, sendSubjectsOptionMenu, sendStartMenu } = require("./lib/send");
-const { uploadProccessedData, getData } = require("./lib/firebase");
+const { uploadProccessedData, getDataOnDate } = require("./lib/firebase");
 const { setAction, setSubject, getUser, deleteUserAfter } = require("./lib/utils/user");
 
-const {
-  SUBJECT_NAMES,
-  HOMEWORK_UPLOAD_MESSAGE,
-  UPLOAD_ACTION,
-  GET_ACTION,
-} = require("./lib/constants");
-D;
+const { HOMEWORK_UPLOAD_MESSAGE, NO_ACTION_CHOOSEN } = require("./lib/constantMessages");
+const { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION } = require("./lib/constants");
+
 async function handler(req, method) {
   try {
     const GET_METHOD = "GET";
@@ -36,10 +32,11 @@ async function handler(req, method) {
     }
     return "Unknown request";
   } catch (error) {
-    errorHandler(error, "mainIndexHandler");
+    errorHandler(error, "mainIndexHandler", "index");
   }
 }
 async function handleGet(path) {
+  return "Telegram bot server - Sonya.js";
   switch (path) {
     case "/test-upload":
       await uploadProccessedData(SUBJECT_NAMES[0], 1, "I said it works");
@@ -59,90 +56,49 @@ async function handleCallbackQuery(callbackQuery) {
 
     if (ACTIONS.has(userQueryName)) {
       const resetTimeSec = 5 * 60;
+      // Setting action for the user *DDN*
       setAction(chatId, userQueryName);
-      // calling reset user, if case the user doesn't send any message
+      // Deleting user after 5 min of inactivity *DDN*
       deleteUserAfter(chatId, resetTimeSec);
+      // Sending menu with subjects *DDN*
       sendSubjectsOptionMenu(chatId);
       console.log(`${userQueryName} action`);
 
-      return `handled callback query ${userQueryName}`;
+      return `handled callback query ${userQueryName} action`;
+      // Checking if user has pressed any of the subject btns *DDN*
     } else if (SUBJECT_NAMES.includes(userQueryName)) {
       const { action } = getUser(chatId) ?? {};
 
       if (action === UPLOAD_ACTION) {
-        // preparing for data upload, along with the location
-        const user = setSubject(chatId, userQueryName);
-        console.log(user, "SET SUBJECT " + userQueryName);
+        // preparing for data upload, along with the location *DDN*
+        setSubject(chatId, userQueryName);
         sendMessage(chatId, HOMEWORK_UPLOAD_MESSAGE);
-        return;
+        return `handled callback query ${userQueryName} subject`;
       } else if (action === GET_ACTION) {
-        // preparing for sending data and the locatiion of data
-        const user = setSubject(chatId, userQueryName);
-        console.log(user, "SET SUBJECT " + userQueryName);
-        const messageObj = {
-          chat: {
-            id: chatId,
-          },
-          text: "get",
-          date: 0,
+        // preparing for sending data and the location of data *DDN*
+        setSubject(chatId, userQueryName);
+        // chatId, subjectName, action
+        const user = getUser(chatId);
+        const params = {
+          chatId,
+          action: user.action,
+          subjectName: user.subjectName,
         };
-        handleMessage(messageObj);
-        return `handled callback query ${userQueryName}`;
+        handleAction(params);
+        return `handled callback query ${userQueryName} subject`;
       }
 
-      sendMessage(chatId, "Упсс...сперва нужно выбрать действие");
+      await sendMessage(chatId, NO_ACTION_CHOOSEN);
       sendStartMenu(chatId);
       return;
     }
+    console.log("No action choosen");
+
+    return;
   } catch (error) {
     errorHandler(error, "handleCallbackQuery");
   }
 }
+JSON.stringify;
 
 module.exports = { handler };
-/*
-switch (userQueryName) {
-      case UPLOAD_ACTION:
-        // setting action for the current user, also starting delete user clock(in case no message appears)
-        console.log(setAction(chatId, UPLOAD_ACTION), "UPLOAD action");
-        // sending subject options
-        sendSubjectsOptionMenu(chatId);
-        return "handled callback query UPLOAD";
-      case GET_ACTION:
-        // setting action for the current user, also starting delete user clock(in case no message appears)
-        console.log(setAction(chatId, GET_ACTION), "GET action");
-        // sending subject options
-        sendSubjectsOptionMenu(chatId);
-        return "handled callback query GET";
-      default:
-        const { action } = getUser(chatId) ?? {};
-        if (action === undefined) {
-          errorHandler("user object is undefined", "handleCallbackQuery");
-        }
-
-        if (SUBJECT_NAMES.includes(userQueryName) && action) {
-          if (action === UPLOAD_ACTION) {
-            // preparing for data upload, along with the location
-            const user = setSubject(chatId, userQueryName);
-            console.log(user, "SET SUBJECT " + userQueryName);
-            sendMessage(chatId, HOMEWORK_UPLOAD_MESSAGE);
-          } else if (action === GET_ACTION) {
-            // preparing for sending data and the locatiion of data
-            const user = setSubject(chatId, userQueryName);
-            console.log(user, "SET SUBJECT " + userQueryName);
-            const messageObj = {
-              chat: {
-                id: chatId,
-              },
-              text: "get",
-            };
-            handleMessage(messageObj);
-          }
-
-          return "handled callback query SUBJECTS";
-        }
-        await sendMessage(chatId, "Упсс...сперва нужно выбрать действие");
-        sendStartMenu(chatId);
-    }
-
-*/

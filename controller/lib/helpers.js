@@ -1,9 +1,9 @@
-function errorHandler(error, name, from) {
+function errorHandler(error, funcName, from) {
   const loggerFunction = console.log;
 
-  loggerFunction("::::START::::");
-  loggerFunction("Error occured in " + name);
+  loggerFunction("\n\n::::START::::");
   if (from === "axios") {
+    loggerFunction("Error occured in " + funcName);
     if (error.response) {
       loggerFunction(error.response.data);
       loggerFunction(error.response.status);
@@ -15,9 +15,9 @@ function errorHandler(error, name, from) {
     }
     loggerFunction(error.toJSON());
   } else {
-    loggerFunction(error);
+    loggerFunction(`Error: ${error}\nError occured in: ${funcName}\nfile: ${from}`);
   }
-  loggerFunction("::::END::::");
+  loggerFunction("::::END::::\n\n");
 }
 module.exports = {
   errorHandler,

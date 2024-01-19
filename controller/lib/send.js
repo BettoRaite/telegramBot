@@ -1,6 +1,20 @@
 const { getAxiosInstance } = require("./axios");
 const { errorHandler } = require("./helpers");
-const { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION, MAIN_MENU_TEXT } = require("./constants");
+const {
+  MAIN_MENU_TEXT,
+  HOMEWORK_UPLOAD_MESSAGE,
+  UPLOAD_SUCCESS_MESSAGE,
+  CANCEL_OPERATION_SUCCESS_MESSAGE,
+  ERROR_MESSAGE,
+  CANCEL_OPERATION_ERROR_MESSAGE,
+  ERROR_DOC_UPLOAD_MESSAGE,
+  TEXT_LIMIT_UPLOAD_REACHED_MESSAGE,
+  INVALID_MESSAGE,
+  INTRODUCTION_TEXT,
+  BTN_TEXT_GET_ACTION,
+  BTN_TEXT_UPLOAD_ACTION,
+} = require("./constantMessages");
+const { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION } = require("./constants");
 
 const MY_TOKEN = process.env.BOT_TOKEN;
 const BASE_URL = `https://api.telegram.org/bot${MY_TOKEN}`;
@@ -19,7 +33,6 @@ function sendMessage(chatId, messageText, replyMarkup = {}) {
 }
 
 function sendPhoto(chatId, imageId) {
-  console.log(imageId);
   return axiosInstance
     .post("sendPhoto", {
       chat_id: chatId,
@@ -27,6 +40,17 @@ function sendPhoto(chatId, imageId) {
     })
     .catch((ex) => {
       errorHandler(ex, "sendPhoto", "axios");
+    });
+}
+function sendMultiplePhotos(chatId, mediaArr) {
+  console.log(mediaArr);
+  return axiosInstance
+    .post("sendMediaGroup", {
+      chat_id: chatId,
+      media: mediaArr,
+    })
+    .catch((ex) => {
+      errorHandler(ex, "sendMultiplePhotos", "axios");
     });
 }
 function sendDoc(chatId, docId) {
@@ -73,8 +97,8 @@ function sendStartMenu(chatId, menuText = MAIN_MENU_TEXT) {
   const replyMarkup = {
     inline_keyboard: [
       [
-        { text: "Получить дз", callback_data: GET_ACTION },
-        { text: "Сохранить дз", callback_data: UPLOAD_ACTION },
+        { text: BTN_TEXT_GET_ACTION, callback_data: GET_ACTION },
+        { text: BTN_TEXT_UPLOAD_ACTION, callback_data: UPLOAD_ACTION },
       ],
     ],
   };
@@ -88,4 +112,5 @@ module.exports = {
   sendStartMenu,
   sendMenuCommands,
   sendDoc,
+  sendMultiplePhotos,
 };

@@ -1,7 +1,6 @@
 const { initializeApp } = require("firebase/app");
 const { errorHandler } = require("./helpers");
 const { SUBJECT_NAMES } = require("./constants");
-const { getStorage, ref, uploadBytes } = require("firebase/storage");
 
 const {
   getFirestore,
@@ -38,13 +37,13 @@ const firebaseConfig = {
 
 let app;
 let firestoreDb;
-let storage;
+
 const COLLECTION_NAME = "subjects";
 const initializeFirebaseApp = () => {
   try {
     app = initializeApp(firebaseConfig);
     firestoreDb = getFirestore();
-    storage = getStorage();
+
     return app;
   } catch (error) {
     errorHandler(error, "firebase-initializeFirebaseApp");
@@ -71,44 +70,61 @@ const uploadProccessedData = async (subjectName, id, data) => {
     [id]: data,
   };
   try {
-    console.log(subjectName);
-    const docRef = doc(firestoreDb, `${COLLECTION_NAME}/${subjectName}`);
-    const dataUpdated = await updateDoc(docRef, dataToUpload, { merge: true });
-    return dataUpdated;
+    const docRef = doc(firestoreDb, COLLECTION_NAME, subjectName);
+    await setDoc(docRef, dataToUpload);
+
+    return data;
   } catch (error) {
     errorHandler(error, "firebase-uploadProcessedData");
   }
 };
-
-const uploadImageId = async (subjectName, imageId) => {
-  const number = Math.floor(Math.random() * (10 - 0) + 0);
-  const dataToUpload = {
-    ["photo" + number]: imageId,
-  };
+const getDataOnDate = async (subjectName, date) => {
   try {
-    console.log("adsasd");
-    const docRef = doc(firestoreDb, `${COLLECTION_NAME}/${subjectName}`);
-    const dataUpdated = await updateDoc(docRef, dataToUpload, { merge: true });
-    return dataUpdated;
+    if (typeof subjectName !== "string" || typeof date !== "string") {
+      errorHandler("Subject name and date must be of type string", "getDataOnDate", "firebase");
+      return;
+    }
+    // Getting data on a certain subject *DDN*
+    const docRef = doc(firestoreDb, COLLECTION_NAME, subjectName);
+    const snapshot = await getDoc(docRef);
+
+    if (snapshot.exists()) {
+      console.log("Doc exists");
+      const docData = snapshot.data();
+      // Getting data under certain date *DDN*
+      const specificDateData = docData[date];
+      // if there is field with data create one *DDN*
+      if (specificDateData) {
+        return specificDateData;
+      }
+      // initializing empty field on a certain date
+      return await uploadProccessedData(subjectName, date, {});
+    } else {
+      console.log("Document not found!");
+    }
   } catch (error) {
-    errorHandler(error, "firebase-uploadImgId");
+    errorHandler(error, "firebase-getDataOnDate", "firebase");
   }
 };
-
 const getData = async (subjectName) => {
   try {
+    if (typeof subjectName !== "string") {
+      errorHandler("Subject name and date must be of type string", "getData", "firebase");
+      return;
+    }
+    // Getting data on a certain subject *DDN*
     const docRef = doc(firestoreDb, COLLECTION_NAME, subjectName);
-    // const q = query(docRef, limit(3));
     const snapshot = await getDoc(docRef);
+
     if (snapshot.exists()) {
+      console.log("Doc exists 'get data'");
       const docData = snapshot.data();
-      console.log(JSON.stringify(docData, null, 4));
       return docData;
     } else {
       console.log("Document not found!");
     }
   } catch (error) {
-    errorHandler(error, "firebase-getData");
+    errorHandler(error, "firebase-getDataOnDate", "firebase");
   }
 };
 
@@ -119,6 +135,6 @@ module.exports = {
   initFirestoreDb,
   getFirebaseApp,
   uploadProccessedData,
+  getDataOnDate,
   getData,
-  uploadImageId,
 };

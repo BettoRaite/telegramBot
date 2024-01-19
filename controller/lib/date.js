@@ -4,22 +4,19 @@ function getLocalUnixTimestamp(timeZoneDiffSec = 0, unixTimestamp) {
   if (!Number.isFinite(timeZoneDiffSec) || !Number.isFinite(unixTimestamp)) {
     errorHandler(
       "timeZoneDiffSec and unixTimestamp expected to be of type number",
-      "getTimestampRelativeTo",
-      "date.js"
+      "getLocalUnixTimestamp",
+      "date"
     );
     return null;
   }
   const localUnixTimestamp = unixTimestamp + timeZoneDiffSec;
-  console.log(new Date(localUnixTimestamp * 1000));
   return localUnixTimestamp;
 }
 function getDate(unixTimestamp) {
   if (!Number.isFinite(unixTimestamp)) {
-    errorHandler("unixTimestamp expected to be of type number", "getDate", "date.js");
+    errorHandler("unixTimestamp expected to be of type number", "getDate", "date");
     return null;
   }
-  const CONV_FACTOR = 1000;
-  const timestamp = unixTimestamp * CONV_FACTOR;
 
   const weekdaysRu = [
     "Воскресенье",
@@ -30,13 +27,17 @@ function getDate(unixTimestamp) {
     "Пятница",
     "Суббота",
   ];
-
   const OFFSET = 1;
+  const CONV_FACTOR = 1000;
+
+  const timestamp = unixTimestamp * CONV_FACTOR;
   const date = new Date(timestamp);
-  const day = Number(date.getDate());
-  const month = Number(date.getMonth()) + OFFSET;
-  const year = Number(date.getFullYear());
-  const weekday = Number(date.getDay());
+
+  const day = Number(date.getUTCDate());
+  const month = Number(date.getUTCMonth()) + OFFSET;
+  const year = Number(date.getUTCFullYear());
+  const weekday = Number(date.getUTCDay());
+
   const time = {
     day,
     month: month,
@@ -44,7 +45,6 @@ function getDate(unixTimestamp) {
     weekday: weekdaysRu[weekday],
     strDate: `${day}-${month}-${year}`,
   };
-  console.log(time);
   return time;
 }
 module.exports = {
