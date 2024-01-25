@@ -36,10 +36,11 @@ async function handler(req, method) {
   }
 }
 async function handleGet(path) {
-  return "Telegram bot server - Sonya.js";
   switch (path) {
     case "/test-upload":
-      await uploadProccessedData(SUBJECT_NAMES[0], 1, "I said it works");
+      await uploadProccessedData(SUBJECT_NAMES[0], "23-1-2024", {
+        test: "whatever",
+      });
       return "Data uploaded successfully";
     case "/test-get":
       const data = await getData(SUBJECT_NAMES[0]);

@@ -1,4 +1,5 @@
-// MESSAGE NAMES
+const COLLECTION_NAME = "subjects";
+// SUBJECT NAMES
 const SUBJECT_NAMES = [
   "математика",
   "русский",
@@ -23,4 +24,5 @@ module.exports = {
   GET_ACTION,
   IMAGE_DATA_PREFIX,
   TEXT_DATA_PREFIX,
+  COLLECTION_NAME,
 };

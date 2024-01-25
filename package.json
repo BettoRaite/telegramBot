@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "dev": "nodemon index.js",
+    "dev": "nodemon --inspect index.js",
     "test": "jest --coverage"
   },
   "keywords": [],

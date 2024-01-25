@@ -1,5 +1,5 @@
 const { errorHandler } = require("./helpers");
-const { uploadProccessedData, getDataOnDate, getData } = require("./firebase");
+const { uploadProccessedData, getData } = require("./firebase");
 const {
   sendMessage,
   sendStartMenu,
@@ -26,6 +26,7 @@ const {
   UPLOAD_LIMIT_REACHED_MESSAGE,
   INVALID_MESSAGE,
   INTRODUCTION_TEXT,
+  UNKNOWN_COMMAND,
 } = require("./constantMessages");
 const {
   SUBJECT_NAMES,
@@ -41,7 +42,6 @@ async function handleMessage(messageObj) {
   const images = messageObj.photo;
   const imageDoc = messageObj.document;
   const caption = messageObj?.photo?.caption;
-  console.log(messageObj);
   if (!messageText && !images && !imageDoc) {
     errorHandler("No message text", "handleMessage");
     return "";
@@ -57,6 +57,7 @@ async function handleMessage(messageObj) {
     }
 
     if (user.action && user.subjectName) {
+      // && (messageText || images)
       if (imageDoc) {
         sendMessage(chatId, ERROR_DOC_UPLOAD_MESSAGE);
         return null;
@@ -103,30 +104,40 @@ async function handleCommand(chatId, command, user) {
     case "continue":
       await sendStartMenu(chatId);
       return sendStartMenu(chatId, "Опции");
+    case "sonyawhoareyou":
+      await sendMessage(chatId, "Приветик, я Соня, а ты?");
+      return sendStartMenu(chatId, "Опции");
+    case "main":
+      await sendMessage(chatId, "Поняла👌");
+      return sendStartMenu(chatId, "✅ Выберите любое из опций.");
+    default:
+      await sendMessage(chatId, UNKNOWN_COMMAND);
+      return;
   }
 }
 async function handleAction(params) {
-  const { chatId, subjectName, action, messageText, imageId, unixTimestamp, caption } = params;
+  const { chatId, subjectName, action, messageText, imageId, unixTimestamp } = params;
 
   switch (action) {
     case UPLOAD_ACTION: {
-      // Getting date to later check if image limit reached *DDN*
+      // Getting date to save and retrieve data *DDN*
       const timeZoneDiffsec = 5 * 3600;
-      const dateObj = await getDate(getLocalUnixTimestamp(timeZoneDiffsec, unixTimestamp));
-      const strDate = dateObj.strDate;
-      // Getting data under certain date *DDN*
-      const storageContent = await getDataOnDate(subjectName, strDate);
+      const dateObj = getDate(getLocalUnixTimestamp(timeZoneDiffsec, unixTimestamp));
+      const strDate = dateObj.strDate; // dateObj.strDate
+      // Getting subject storage content on certain date or empty object *DDN*
+      const storageContent = await getData(subjectName, strDate);
 
-      if (SUBJECT_NAMES.includes(subjectName)) {
-        if (messageText) {
-          handleTextDataUpload(chatId, subjectName, strDate, messageText, storageContent);
-          return;
-        } else if (imageId) {
-          handleImageDataUpload(chatId, subjectName, strDate, imageId, storageContent);
-          return;
-        }
+      // checking if subject
+      if (!SUBJECT_NAMES.includes(subjectName)) {
+        errorHandler("Invalid subject name encountered", "handleAction");
+        return;
       }
-      errorHandler("Invalid subject name encountered", "handleAction");
+
+      if (messageText) {
+        handleTextDataUpload(chatId, subjectName, strDate, messageText, storageContent);
+      } else if (imageId) {
+        handleImageDataUpload(chatId, subjectName, strDate, imageId, storageContent);
+      }
       return;
     }
 
@@ -175,8 +186,9 @@ async function handleTextDataUpload(chatId, subjectName, strDate, textToUpload, 
     TEXT_DATA_PREFIX
   );
   if (textLeftToUpload <= 0) {
+    const dataUploadType = " текст";
     deleteUser(chatId); // clearing user from users map *DDN*
-    await sendMessage(chatId, UPLOAD_LIMIT_REACHED_MESSAGE);
+    await sendMessage(chatId, UPLOAD_LIMIT_REACHED_MESSAGE + dataUploadType);
 
     return sendStartMenu(chatId);
   }
@@ -204,13 +216,13 @@ async function handleImageDataUpload(chatId, subjectName, strDate, imageId, stor
     IMAGE_UPLOAD_LIMIT,
     IMAGE_DATA_PREFIX
   );
-  console.log(imagesLeftToUpload + " images to upload");
   // check if images left to upload is 0 or less  *DDN*
   if (imagesLeftToUpload < 1) {
     // clearing user from users map *DDN*
     if (getUser(chatId)) {
+      const dataUploadType = " изображения";
       deleteUser(chatId);
-      await sendMessage(chatId, UPLOAD_LIMIT_REACHED_MESSAGE);
+      await sendMessage(chatId, UPLOAD_LIMIT_REACHED_MESSAGE + dataUploadType);
       sendStartMenu(chatId);
     }
 
@@ -219,36 +231,72 @@ async function handleImageDataUpload(chatId, subjectName, strDate, imageId, stor
 
   queueImageId(chatId, imageId);
 
-  const startImageUpLoad = async function (imagesToUpload) {
-    setImageUploadingToTrue(chatId);
-
-    await uploadProccessedData(subjectName, strDate, storageContent);
-    if (imagesToUpload < 1) {
-      deleteUser(chatId);
-      sendMessage(chatId, UPLOAD_SUCCESS_MESSAGE);
-      return;
-    } else if (user.imageIdsQueue.length > 0) {
-      const uniqueId = `${IMAGE_DATA_PREFIX}${uniqid()}`;
-      console.log(uniqueId);
-      // Creating a new prop containing text data *DDN*
-      const user = getUser(chatId);
-      storageContent[uniqueId] = user.imageIdsQueue.pop();
-
-      startImageUpLoad(--imagesToUpload);
-    }
-    deleteUser(chatId);
-    sendMessage(chatId, UPLOAD_SUCCESS_MESSAGE);
-  };
   const user = getUser(chatId);
-  const isImageUploading = user.isImageUploading;
-  if (!isImageUploading) {
-    sendMessage(chatId, `Будут загружены ${imagesLeftToUpload} картинки 🤖`);
-    startImageUpLoad(imagesLeftToUpload);
+  if (!user) {
+    errorHandler("user is undefined", "handleImageDataUpload", "telegram.js");
+    return;
   }
+  const isImageUploading = user.isImageUploading;
+
+  if (!isImageUploading && user) {
+    sendMessage(chatId, `Максимальное кол-во картинок для загрузки: ${imagesLeftToUpload}  🤖`);
+    const params = {
+      imagesLeftToUpload,
+      chatId,
+      subjectName,
+      strDate,
+      storageContent,
+    };
+    await startImageUpLoad(params);
+    sendStartMenu(chatId);
+  }
+
   // deleteUser(chatId); don't delete user since the user might send more images *DDN*
 
   return;
 }
+async function startImageUpLoad(params) {
+  const { subjectName, strDate, storageContent, imagesLeftToUpload, chatId } = params;
+  setImageUploadingToTrue(chatId);
+
+  const user = getUser(chatId);
+  if (!user) {
+    errorHandler("user is undefined", "startImageUpLoad", "telegram.js");
+    return;
+  }
+
+  for (let i = 0; i < imagesLeftToUpload; ++i) {
+    // generating unique id *DDN*
+    const generatedId = uniqid();
+    const dataId = `${IMAGE_DATA_PREFIX}${generatedId}`;
+    const userImgId = user.imageIdsQueue.pop();
+    // saving to our storage var *DDN*
+    storageContent[dataId] = userImgId;
+    // uploading image
+    await uploadProccessedData(subjectName, strDate, storageContent);
+
+    // checking if image queue length equals to zero *DDN*
+    if (user.imageIdsQueue.length <= 0) {
+      // deleting the user var *DDN*
+      deleteUser(chatId);
+      await sendMessage(chatId, UPLOAD_SUCCESS_MESSAGE);
+      return;
+    }
+  }
+
+  const totalUnuploadedImgs = user.imageIdsQueue.length;
+  const ununploadedText = `Кол-во не загруженных картинок: ${totalUnuploadedImgs} 😞\nпотому что был достигнут лимит.`;
+
+  deleteUser(chatId);
+
+  await sendMessage(chatId, UPLOAD_SUCCESS_MESSAGE);
+  await sendMessage(chatId, ununploadedText);
+
+  return;
+
+  // uploading data *DDN*
+}
+
 function countDataLeftToUpload(storageContent, limit, targetName) {
   if (
     // Check if storageContent is object and not instance of array *DDN*
@@ -259,8 +307,8 @@ function countDataLeftToUpload(storageContent, limit, targetName) {
     typeof targetName !== "string"
   ) {
     errorHandler("Invalid argument value", "hasReachedUploadLimit", "telegram");
-    // sending true to avoid data upload *DDN*
-    return true;
+    // sending 0 to avoid data upload *DDN*
+    return 0;
   }
   let targetsTotal = 0;
   for (const propName of Object.keys(storageContent)) {

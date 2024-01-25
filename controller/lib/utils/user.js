@@ -73,6 +73,10 @@ function queueImageId(userId, imageId) {
   }
   // Check if the user already exists in the users map, if not create one and assign "action"
   const user = getUser(userId);
+  if (!user) {
+    errorHandler("user is undefined", "queueImageId", "user.js");
+    return null;
+  }
   const imageIdsQueue = user.imageIdsQueue;
   imageIdsQueue.push(imageId);
   return imageIdsQueue;
@@ -92,7 +96,8 @@ function getResetKey(userId) {
   return users.get(userId)?.resetKey;
 }
 function deleteUser(userId) {
-  console.log("deleted user successfully", getUser(userId));
+  console.log("deleted user successfull\n", getUser(userId));
+
   if (typeof userId !== "string") {
     errorHandler(new TypeError("User id must be of type string"), "users", "deleteUser");
     return null;
@@ -113,8 +118,9 @@ function deleteUserAfter(userId, timeSec) {
   if (!user.hasReset) {
     console.log("Running delete user after...");
     user.hasReset = true;
+
     setTimeout(() => {
-      if (getResetKey(userId) === resetKey) {
+      if (getResetKey(userId) === resetKey && !getUser(userId)?.isImageUploading) {
         sendMessage(userId, "упс вы ничего не написали");
         sendStartMenu(userId);
         console.log("Successfully deleted user");

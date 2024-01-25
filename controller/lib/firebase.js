@@ -1,19 +1,8 @@
 const { initializeApp } = require("firebase/app");
 const { errorHandler } = require("./helpers");
-const { SUBJECT_NAMES } = require("./constants");
+const { SUBJECT_NAMES, COLLECTION_NAME } = require("./constants");
 
-const {
-  getFirestore,
-  doc,
-  setDoc,
-  addDoc,
-  getDoc,
-  query,
-  collection,
-  getDocs,
-  updateDoc,
-  limit,
-} = require("firebase/firestore");
+const { getFirestore, doc, setDoc, getDoc, collection } = require("firebase/firestore");
 
 const {
   FIREBASE_API_KEY,
@@ -38,7 +27,6 @@ const firebaseConfig = {
 let app;
 let firestoreDb;
 
-const COLLECTION_NAME = "subjects";
 const initializeFirebaseApp = () => {
   try {
     app = initializeApp(firebaseConfig);
@@ -46,14 +34,9 @@ const initializeFirebaseApp = () => {
 
     return app;
   } catch (error) {
-    errorHandler(error, "firebase-initializeFirebaseApp");
+    errorHandler(error, "initializeFirebaseApp", "firebase.js");
   }
 };
-/*
-  What is I have a subject like russian
-  and I create three docs under it like date1, date2,date3
-
-*/
 const initFirestoreDb = async () => {
   try {
     for (const subject of SUBJECT_NAMES) {
@@ -61,73 +44,114 @@ const initFirestoreDb = async () => {
       await setDoc(doc(subjectsRef, subject), {});
     }
   } catch (error) {
-    errorHandler(error, "firebase-initFirestoreDb");
+    errorHandler(error, "initFirestoreDb", "firebase.js");
   }
 };
-
-const uploadProccessedData = async (subjectName, id, data) => {
-  const dataToUpload = {
-    [id]: data,
-  };
+const uploadProccessedData = async (subjectName, date, uploadData) => {
+  console.log("firebase ->\n" + JSON.stringify(uploadData, null, 4));
   try {
-    const docRef = doc(firestoreDb, COLLECTION_NAME, subjectName);
-    await setDoc(docRef, dataToUpload);
+    const subjectData = await getData(subjectName);
+    if (subjectData == null) {
+      errorHandler("subject data is null", "uploadProcessedData", "firebase.js");
+      return null;
+    }
+    removePastDates(subjectData);
+    subjectData[date] = uploadData;
 
-    return data;
+    const docRef = doc(firestoreDb, COLLECTION_NAME, subjectName);
+    await setDoc(docRef, subjectData);
+
+    return subjectData;
   } catch (error) {
-    errorHandler(error, "firebase-uploadProcessedData");
+    errorHandler(error, "uploadProcessedData", "firebase.js");
   }
 };
-const getDataOnDate = async (subjectName, date) => {
+
+const getData = async (subjectName, date = "") => {
   try {
     if (typeof subjectName !== "string" || typeof date !== "string") {
       errorHandler("Subject name and date must be of type string", "getDataOnDate", "firebase");
       return;
+    }
+    if (!SUBJECT_NAMES.includes(subjectName)) {
+      return null;
     }
     // Getting data on a certain subject *DDN*
     const docRef = doc(firestoreDb, COLLECTION_NAME, subjectName);
     const snapshot = await getDoc(docRef);
 
     if (snapshot.exists()) {
-      console.log("Doc exists");
       const docData = snapshot.data();
+      if (!date) {
+        return docData;
+      }
+      console.log(docData);
       // Getting data under certain date *DDN*
       const specificDateData = docData[date];
       // if there is field with data create one *DDN*
       if (specificDateData) {
         return specificDateData;
       }
-      // initializing empty field on a certain date
-      return await uploadProccessedData(subjectName, date, {});
+      // if there is no data on the current date then send empty object*DDN*
+      return {};
     } else {
-      console.log("Document not found!");
+      errorHandler("subject doesn't exist", "getData", "firebase.js");
     }
   } catch (error) {
-    errorHandler(error, "firebase-getDataOnDate", "firebase");
-  }
-};
-const getData = async (subjectName) => {
-  try {
-    if (typeof subjectName !== "string") {
-      errorHandler("Subject name and date must be of type string", "getData", "firebase");
-      return;
-    }
-    // Getting data on a certain subject *DDN*
-    const docRef = doc(firestoreDb, COLLECTION_NAME, subjectName);
-    const snapshot = await getDoc(docRef);
-
-    if (snapshot.exists()) {
-      console.log("Doc exists 'get data'");
-      const docData = snapshot.data();
-      return docData;
-    } else {
-      console.log("Document not found!");
-    }
-  } catch (error) {
-    errorHandler(error, "firebase-getDataOnDate", "firebase");
+    errorHandler(error, "getData", "firebase.js");
   }
 };
 
+function removePastDates(subjectData) {
+  const MAX_FIELDS_PER_SUBJECT = 2;
+  const dates = Object.keys(subjectData);
+  if (dates.length > MAX_FIELDS_PER_SUBJECT) {
+    const lastDate = sortDates(dates)[0];
+    console.log(lastDate);
+    delete subjectData[lastDate];
+    return subjectData;
+  }
+  return subjectData;
+}
+function sortDates(dates) {
+  if (!Array.isArray(dates)) {
+    return null;
+  }
+
+  const SEPARATOR = "-";
+  const datesLen = dates.length;
+
+  const swap = (i) => {
+    const swap = dates[i + 1];
+    dates[i + 1] = dates[i];
+    dates[i] = swap;
+  };
+
+  for (let c = 0; c < datesLen; ++c) {
+    for (let i = 0; i < datesLen - 1; ++i) {
+      const dateComponents = dates[i].split(SEPARATOR);
+      const [day, month, year] = dateComponents.map((component) => Number(component));
+
+      const nextDateComponents = dates[i + 1].split(SEPARATOR);
+      const [nextDay, nextMonth, nextYear] = nextDateComponents.map((component) =>
+        Number(component)
+      );
+      if (year > nextYear) {
+        swap(i);
+      } else if (year == nextYear) {
+        if (month > nextMonth) {
+          swap(i);
+        } else if (month == nextMonth) {
+          if (day > nextDay) {
+            swap(i);
+          }
+          continue;
+        }
+      }
+    }
+  }
+  return dates;
+}
 const getFirebaseApp = () => app;
 
 module.exports = {
@@ -135,6 +159,7 @@ module.exports = {
   initFirestoreDb,
   getFirebaseApp,
   uploadProccessedData,
-  getDataOnDate,
   getData,
+  removePastDates,
+  sortDates,
 };
