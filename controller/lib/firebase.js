@@ -105,6 +105,7 @@ const getData = async (subjectName, date = "") => {
 function removePastDates(subjectData) {
   const MAX_FIELDS_PER_SUBJECT = 2;
   const dates = Object.keys(subjectData);
+
   if (dates.length > MAX_FIELDS_PER_SUBJECT) {
     const lastDate = sortDates(dates)[0];
     console.log(lastDate);
