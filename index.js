@@ -13,7 +13,6 @@ initializeFirebaseApp();
 app.post("*", async (req, res) => {
   console.log("POST request was made");
   res.send(await handler(req, "POST"));
-  res.status(200).send("OK");
 });
 
 app.get("*", async (req, res) => {

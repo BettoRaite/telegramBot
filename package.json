@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
+    "prod": "node index.js",
     "dev": "nodemon --inspect index.js",
     "test": "jest --coverage"
   },
