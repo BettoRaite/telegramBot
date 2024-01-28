@@ -1,11 +1,11 @@
 const { errorHandler } = require("./lib/helpers");
 const { handleMessage, handleAction } = require("./lib/telegram");
 const { sendMessage, sendSubjectsOptionMenu, sendStartMenu } = require("./lib/send");
-const { uploadProccessedData, getDataOnDate } = require("./lib/firebase");
+const { uploadProccessedData, getData } = require("./lib/firebase");
 const { setAction, setSubject, getUser, deleteUserAfter } = require("./lib/utils/user");
-
 const { HOMEWORK_UPLOAD_MESSAGE, NO_ACTION_CHOOSEN } = require("./lib/constantMessages");
-const { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION } = require("./lib/constants");
+const { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION, TEXT_DATA_PREFIX } = require("./lib/constants");
+const uniqid = require("uniqid");
 
 async function handler(req, method) {
   try {
@@ -36,18 +36,21 @@ async function handler(req, method) {
   }
 }
 async function handleGet(path) {
-  switch (path) {
-    case "/test-upload":
-      await uploadProccessedData(SUBJECT_NAMES[0], "23-1-2024", {
-        test: "whatever",
-      });
-      return "Data uploaded successfully";
-    case "/test-get":
-      const data = await getData(SUBJECT_NAMES[0]);
-      return JSON.stringify(data, null, 4);
-    default:
-      return "Telegram bot server - Sonya.js";
+  const PROD = process.env.PROD;
+  if (PROD) {
+    switch (path) {
+      case "/test-upload-text":
+        const uniqueTextId = TEXT_DATA_PREFIX + uniqid();
+        await uploadProccessedData(SUBJECT_NAMES[0], "27-1-2024", {
+          [uniqueTextId]: "some data",
+        });
+        return "Data uploaded successfully";
+      case "/test-get":
+        const data = await getData(SUBJECT_NAMES[0]);
+        return JSON.stringify(data, null, 4);
+    }
   }
+  return "Telegram bot server - Sonya.js";
 }
 async function handleCallbackQuery(callbackQuery) {
   try {

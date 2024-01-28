@@ -12,7 +12,7 @@ function getLocalUnixTimestamp(timeZoneDiffSec = 0, unixTimestamp) {
   const localUnixTimestamp = unixTimestamp + timeZoneDiffSec;
   return localUnixTimestamp;
 }
-function getDate(unixTimestamp) {
+function getDate(unixTimestamp, dateString = "") {
   if (!Number.isFinite(unixTimestamp)) {
     errorHandler("unixTimestamp expected to be of type number", "getDate", "date");
     return null;
@@ -31,19 +31,28 @@ function getDate(unixTimestamp) {
   const CONV_FACTOR = 1000;
 
   const timestamp = unixTimestamp * CONV_FACTOR;
-  const date = new Date(timestamp);
+  let date = {};
+  if (dateString) {
+    date = new Date(dateString);
+  } else {
+    date = new Date(timestamp);
+  }
 
   const day = Number(date.getUTCDate());
   const month = Number(date.getUTCMonth()) + OFFSET;
   const year = Number(date.getUTCFullYear());
   const weekday = Number(date.getUTCDay());
 
+  const MIN_VAL = 10;
   const time = {
     day,
     month: month,
     year,
     weekday: weekdaysRu[weekday],
-    strDate: `${day}-${month}-${year}`,
+    strDate: `${year}-${month < MIN_VAL ? "0" + month : month}-${day < MIN_VAL ? "0" + day : day}`,
+    reversedStrDate: `${day < MIN_VAL ? "0" + day : day}-${
+      month < MIN_VAL ? "0" + month : month
+    }-${year}`,
   };
   return time;
 }

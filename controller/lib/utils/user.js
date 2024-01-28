@@ -1,3 +1,4 @@
+const { EXCEEDED_TIME_LIMIT } = require("../constantMessages");
 const { errorHandler } = require("../helpers");
 const { sendMessage, sendStartMenu } = require("../send");
 
@@ -17,6 +18,7 @@ function addUser(userId) {
       resetKey: Symbol("Unique reset key for the current user state"),
       hasReset: false,
       imageIdsQueue: [],
+      caption: "",
     });
   }
 
@@ -71,7 +73,6 @@ function queueImageId(userId, imageId) {
     errorHandler(new TypeError("image id must be of type string"), "users", "queueImageId");
     return null;
   }
-  // Check if the user already exists in the users map, if not create one and assign "action"
   const user = getUser(userId);
   if (!user) {
     errorHandler("user is undefined", "queueImageId", "user.js");
@@ -80,6 +81,19 @@ function queueImageId(userId, imageId) {
   const imageIdsQueue = user.imageIdsQueue;
   imageIdsQueue.push(imageId);
   return imageIdsQueue;
+}
+function queueCaption(userId, caption) {
+  if (typeof caption !== "string" || typeof userId !== "string") {
+    errorHandler(new TypeError("caption must be of type string"), "queueCaption", "user.js");
+    return null;
+  }
+  const user = getUser(userId);
+  if (!user) {
+    errorHandler("user is undefined", "queueCaption", "user.js");
+    return null;
+  }
+  user.caption = caption;
+  return user;
 }
 function getUser(userId) {
   if (typeof userId !== "string") {
@@ -95,8 +109,9 @@ function getResetKey(userId) {
   }
   return users.get(userId)?.resetKey;
 }
+
 function deleteUser(userId) {
-  console.log("deleted user successfull\n", getUser(userId));
+  console.log("Deleting user.\n", JSON.stringify(getUser(userId), null, 4));
 
   if (typeof userId !== "string") {
     errorHandler(new TypeError("User id must be of type string"), "users", "deleteUser");
@@ -104,6 +119,7 @@ function deleteUser(userId) {
   }
   return users.delete(userId);
 }
+
 function deleteUserAfter(userId, timeSec) {
   const user = getUser(userId);
 
@@ -119,14 +135,14 @@ function deleteUserAfter(userId, timeSec) {
     console.log("Running delete user after...");
     user.hasReset = true;
 
-    setTimeout(() => {
+    setTimeout(async () => {
       if (getResetKey(userId) === resetKey && !getUser(userId)?.isImageUploading) {
-        sendMessage(userId, "упс вы ничего не написали");
+        await sendMessage(userId, EXCEEDED_TIME_LIMIT);
         sendStartMenu(userId);
-        console.log("Successfully deleted user");
-        return users.delete(userId);
+
+        return deleteUser(userId);
       }
-      console.log("User object was already deleted");
+      console.log("User object has already been deleted.");
     }, 1000 * timeSec);
   }
 }
@@ -140,4 +156,5 @@ module.exports = {
   getResetKey,
   setImageUploadingToTrue,
   queueImageId,
+  queueCaption,
 };

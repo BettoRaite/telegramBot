@@ -48,16 +48,15 @@ const initFirestoreDb = async () => {
   }
 };
 const uploadProccessedData = async (subjectName, date, uploadData) => {
-  console.log("firebase ->\n" + JSON.stringify(uploadData, null, 4));
   try {
     const subjectData = await getData(subjectName);
     if (subjectData == null) {
       errorHandler("subject data is null", "uploadProcessedData", "firebase.js");
       return null;
     }
+
     removePastDates(subjectData);
     subjectData[date] = uploadData;
-
     const docRef = doc(firestoreDb, COLLECTION_NAME, subjectName);
     await setDoc(docRef, subjectData);
 
@@ -70,11 +69,8 @@ const uploadProccessedData = async (subjectName, date, uploadData) => {
 const getData = async (subjectName, date = "") => {
   try {
     if (typeof subjectName !== "string" || typeof date !== "string") {
-      errorHandler("Subject name and date must be of type string", "getDataOnDate", "firebase");
+      errorHandler("Subject name and date must be of type string", "getData", "firebase");
       return;
-    }
-    if (!SUBJECT_NAMES.includes(subjectName)) {
-      return null;
     }
     // Getting data on a certain subject *DDN*
     const docRef = doc(firestoreDb, COLLECTION_NAME, subjectName);
@@ -85,7 +81,6 @@ const getData = async (subjectName, date = "") => {
       if (!date) {
         return docData;
       }
-      console.log(docData);
       // Getting data under certain date *DDN*
       const specificDateData = docData[date];
       // if there is field with data create one *DDN*
@@ -95,7 +90,8 @@ const getData = async (subjectName, date = "") => {
       // if there is no data on the current date then send empty object*DDN*
       return {};
     } else {
-      errorHandler("subject doesn't exist", "getData", "firebase.js");
+      errorHandler("Undefined reference", "getData", "firebase.js");
+      return null;
     }
   } catch (error) {
     errorHandler(error, "getData", "firebase.js");
@@ -103,7 +99,7 @@ const getData = async (subjectName, date = "") => {
 };
 
 function removePastDates(subjectData) {
-  const MAX_FIELDS_PER_SUBJECT = 2;
+  const MAX_FIELDS_PER_SUBJECT = 3;
   const dates = Object.keys(subjectData);
 
   if (dates.length > MAX_FIELDS_PER_SUBJECT) {
@@ -131,10 +127,10 @@ function sortDates(dates) {
   for (let c = 0; c < datesLen; ++c) {
     for (let i = 0; i < datesLen - 1; ++i) {
       const dateComponents = dates[i].split(SEPARATOR);
-      const [day, month, year] = dateComponents.map((component) => Number(component));
+      const [year, month, day] = dateComponents.map((component) => Number(component));
 
       const nextDateComponents = dates[i + 1].split(SEPARATOR);
-      const [nextDay, nextMonth, nextYear] = nextDateComponents.map((component) =>
+      const [nextYear, nextMonth, nextDay] = nextDateComponents.map((component) =>
         Number(component)
       );
       if (year > nextYear) {

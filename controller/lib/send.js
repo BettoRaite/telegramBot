@@ -13,6 +13,7 @@ const {
   INTRODUCTION_TEXT,
   BTN_TEXT_GET_ACTION,
   BTN_TEXT_UPLOAD_ACTION,
+  SUBJECTS_MENU_TEXT,
 } = require("./constantMessages");
 const { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION } = require("./constants");
 
@@ -20,16 +21,30 @@ const MY_TOKEN = process.env.BOT_TOKEN;
 const BASE_URL = `https://api.telegram.org/bot${MY_TOKEN}`;
 const axiosInstance = getAxiosInstance(BASE_URL);
 
-function sendMessage(chatId, messageText, replyMarkup = {}) {
-  return axiosInstance
-    .get("sendMessage", {
-      chat_id: chatId || MY_GROUP_CHAT_ID,
-      text: messageText,
-      reply_markup: JSON.stringify(replyMarkup),
-    })
-    .catch((ex) => {
-      errorHandler(ex, "sendMessage", "axios");
-    });
+function sendMessage(chatId, messageText, params = {}) {
+  if (!(params instanceof Object && !(params instanceof Array))) {
+    errorHandler(TypeError("Params must be of type object"), "sendMessage", "axios");
+    return;
+  }
+  const {
+    parse_mode = "",
+    disable_notification = false,
+    protect_content = false,
+    reply_markup = {},
+  } = params;
+
+  const sendMessageParams = {
+    chat_id: chatId,
+    text: messageText,
+    parse_mode,
+    disable_notification,
+    protect_content,
+    reply_markup: JSON.stringify(reply_markup),
+  };
+
+  return axiosInstance.get("sendMessage", sendMessageParams).catch((ex) => {
+    errorHandler(ex, "sendMessage", "axios");
+  });
 }
 
 function sendPhoto(chatId, imageId) {
@@ -65,44 +80,48 @@ function sendDoc(chatId, docId) {
 }
 
 function sendSubjectsOptionMenu(chatId) {
-  try {
-    const replyMarkup = {
-      inline_keyboard: [],
-    };
+  const replyMarkup = {
+    inline_keyboard: [],
+  };
 
-    for (const subjectName of SUBJECT_NAMES) {
-      capSubjectName = subjectName.at(0).toUpperCase() + subjectName.slice(1);
-      const button = [{ text: capSubjectName, callback_data: subjectName }];
-      replyMarkup.inline_keyboard.push(button);
-    }
-    return sendMessage(chatId, "Выберите одно из опций", replyMarkup);
-  } catch (error) {
-    errorHandler(error, "sendSubjectsOptionMenu");
+  for (const subjectName of SUBJECT_NAMES) {
+    capSubjectName = subjectName.at(0).toUpperCase() + subjectName.slice(1);
+    const button = [{ text: capSubjectName, callback_data: subjectName }];
+    replyMarkup.inline_keyboard.push(button);
   }
+  const params = {
+    reply_markup: replyMarkup,
+  };
+  return sendMessage(chatId, SUBJECTS_MENU_TEXT, params);
 }
 
 function sendMenuCommands(chatId, menuText = MAIN_MENU_TEXT) {
-  let menu = {
-    resize_keyboard: true,
-    is_persistent: true,
-    force_reply: true,
-    selective: true,
-    keyboard: [["/continue - продолжить"]],
+  const params = {
+    reply_markup: {
+      resize_keyboard: true,
+      is_persistent: false,
+      force_reply: true,
+      selective: true,
+      keyboard: [["продолжить"]],
+    },
   };
 
-  return sendMessage(chatId, menuText, menu);
+  return sendMessage(chatId, menuText, null);
 }
 
 function sendStartMenu(chatId, menuText = MAIN_MENU_TEXT) {
-  const replyMarkup = {
-    inline_keyboard: [
-      [
-        { text: BTN_TEXT_GET_ACTION, callback_data: GET_ACTION },
-        { text: BTN_TEXT_UPLOAD_ACTION, callback_data: UPLOAD_ACTION },
+  const params = {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: BTN_TEXT_GET_ACTION, callback_data: GET_ACTION },
+          { text: BTN_TEXT_UPLOAD_ACTION, callback_data: UPLOAD_ACTION },
+        ],
       ],
-    ],
+    },
   };
-  return sendMessage(chatId, menuText, replyMarkup);
+
+  return sendMessage(chatId, menuText, params);
 }
 
 module.exports = {
