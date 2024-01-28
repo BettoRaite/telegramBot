@@ -49,7 +49,6 @@ async function handleMessage(messageObj) {
   try {
     const chatId = String(messageObj.chat.id);
     const user = getUser(chatId) ?? {};
-    console.log(chatId);
     if (messageText.startsWith("/")) {
       const command = messageText.slice(1).toLowerCase();
       return handleCommand(chatId, command, user);
@@ -130,7 +129,6 @@ async function handleAction(params) {
   switch (action) {
     case UPLOAD_ACTION:
       if (!ADMIN_IDS?.includes(chatId)) {
-        console.log(chatId);
         deleteUser(chatId);
         await sendMessage(chatId, ACCESS_RESTRICTED_MESSAGE);
         sendStartMenu(chatId);
