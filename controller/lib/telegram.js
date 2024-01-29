@@ -26,6 +26,8 @@ const {
   HOMEWORK_UPLOAD_MESSAGE,
   NO_DATA_FOUND,
   ACCESS_RESTRICTED_MESSAGE,
+  SONYA_ABOUT_TEXT,
+  COMMANDS_LIST,
 } = require("./constantMessages");
 const {
   UPLOAD_ACTION,
@@ -95,9 +97,6 @@ async function handleCommand(chatId, command, user) {
   const { action, subjectName } = user;
 
   switch (command) {
-    case "test":
-      sendMenuCommands(chatId);
-      return;
     case "cancel":
       if (action || subjectName) {
         // deleting user obj and cleanig users map
@@ -112,8 +111,14 @@ async function handleCommand(chatId, command, user) {
       await sendMessage(chatId, INTRODUCTION_TEXT);
       sendStartMenu(chatId);
       return;
+    case "help":
+      await sendMessage(chatId, COMMANDS_LIST);
+      return;
     case "sonyawhoareyou":
-      await sendMessage(chatId, "Приветик, я Соня, а ты?");
+      const params = {
+        parse_mode: "HTML",
+      };
+      await sendMessage(chatId, SONYA_ABOUT_TEXT, params);
       return;
     case "main":
       await sendMessage(chatId, "Поняла 😚");
