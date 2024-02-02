@@ -58,7 +58,6 @@ function sendPhoto(chatId, imageId) {
     });
 }
 function sendMultiplePhotos(chatId, mediaArr) {
-  console.log(mediaArr);
   return axiosInstance
     .post("sendMediaGroup", {
       chat_id: chatId,

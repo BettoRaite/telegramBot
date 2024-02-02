@@ -9,7 +9,7 @@ const {
   queueImageId,
   queueCaption,
 } = require("./utils/user");
-const { getDate, getLocalUnixTimestamp } = require("./date");
+const { getDate, getLocalUnixTimestamp, getDateUTC5, calculateDateDiff } = require("./date");
 const uniqid = require("uniqid");
 const ADMIN_IDS = process.env.ADMIN_IDS;
 
@@ -140,8 +140,8 @@ async function handleAction(params) {
         return;
       }
       // Getting date to save and retrieve data *DDN*
-      const timeZoneDiffsec = 5 * 3600;
-      const dateObj = getDate(getLocalUnixTimestamp(timeZoneDiffsec, unixTimestamp));
+
+      const dateObj = getDateUTC5(unixTimestamp);
       const strDate = dateObj.strDate; //
       // Getting subject storage content on certain date or empty object *DDN*
       const storageContent = await getData(subjectName, strDate);
@@ -343,15 +343,14 @@ async function handleDataRetrival(chatId, subjectName) {
   return;
 }
 async function handleDataSending(chatId, subjectData) {
-  // Sorting dates*DDN*
+  // Sorting dates *DDN*
   const dates = Object.keys(subjectData);
   const sortedDates = sortDates(dates);
-  const reversedSortedDates = sortedDates.reverse();
   // Iterating through sorted dates *DDN*
-  for (const date of reversedSortedDates) {
-    const dataOnDate = subjectData[date];
+  for (const docDateStr of sortedDates) {
+    const dataOnCertainDate = subjectData[docDateStr];
     // Filtering data on text and image *DDN*
-    const filteredData = filterData(dataOnDate);
+    const filteredData = filterData(dataOnCertainDate);
     // If data of a certain date isn't an object return error *DDN*
     if (!filteredData) {
       errorHandler("error filtering data", "handleDataSending", "telegram.js");
@@ -359,10 +358,14 @@ async function handleDataSending(chatId, subjectData) {
       return;
     }
     const [textData, mediaArr] = filteredData;
-    const dateObj = getDate(0, date);
-    const reversedDate = dateObj.reversedStrDate;
-    const weekday = dateObj.weekday;
-    const formattedText = formatText(weekday, reversedDate, textData);
+
+    // const reversedDate = dateObj.reversedStrDate;
+    const docDate = new Date(docDateStr);
+    const currentDate = new Date();
+    const reversedStrDate = getDate(0, docDateStr).reversedStrDate;
+
+    const dateText = calculateDateDiff(currentDate, docDate);
+    const formattedText = formatText(dateText, reversedStrDate, textData);
 
     const params = {
       parse_mode: "HTML",
@@ -374,28 +377,29 @@ async function handleDataSending(chatId, subjectData) {
     }
   }
 }
-function filterData(dataOnDate) {
-  if (dataOnDate instanceof Object && !(dataOnDate instanceof Array)) {
+function filterData(dataOnCertainDate) {
+  if (dataOnCertainDate instanceof Object && !(dataOnCertainDate instanceof Array)) {
     const textData = [];
     const mediaArr = [];
 
-    for (const dataName in dataOnDate) {
+    for (const dataName in dataOnCertainDate) {
       if (dataName.includes(TEXT_DATA_PREFIX) || dataName.includes(CAPTION_DATA_PREFIX)) {
-        textData.push(dataOnDate[dataName]);
+        textData.push(dataOnCertainDate[dataName]);
       } else if (dataName.includes(IMAGE_DATA_PREFIX)) {
         mediaArr.push({
           type: "photo",
-          media: dataOnDate[dataName],
+          media: dataOnCertainDate[dataName],
         });
       }
     }
     return [textData, mediaArr];
   }
-  errorHandler("dataOnDate is undefined", "filterData", "telegram.js");
+  errorHandler("dataOnCertainDate is undefined", "filterData", "telegram.js");
   return null;
 }
-function formatText(weekday, reversedDate, textData) {
-  let formattedText = `🗓 <i>Дата</i>: <b>${weekday}</b> <i>(${reversedDate})</i>\n\n`;
+function formatText(dateText, reversedDate, textData) {
+  dateText = dateText.slice(0, 1).toUpperCase() + dateText.slice(1);
+  let formattedText = `🗓 <i>Дата</i>: <b>${dateText}</b> <i>(${reversedDate})</i>\n\n`;
   let count = 1;
   for (const text of textData) {
     formattedText += `✍️ <b>Запись (${count})</b> \n ${text}\n\n`;
