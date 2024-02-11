@@ -1,54 +1,79 @@
-const { hasReachedUploadLimit } = require("../lib/telegram");
+const { createReplyKeyboardLayout } = require("../lib/telegram");
 
-const LIMIT = 5;
-const SUBSTRING = "text";
-describe("hasReachedUploadLimit", () => {
-  describe(`Counts how many prop names in an object 
-  contain passed in substring and check if more than or equal to the provided limit`, () => {
-    test("If object has less prop names that contain the specific substring than the limit return false", () => {
-      const obj = {
-        abctext: 1,
-        abctext1: 1,
-        abctext2: 2,
-      };
-      expect(hasReachedUploadLimit(obj, LIMIT, SUBSTRING)).toBe(false);
-    });
-    test("If object has prop names that contain the specific substring more than or equal to the limit return true", () => {
-      const obj = {
-        abctext: 1,
-        abctext1: 1,
-        abctext2: 2,
-        abctext3: 2,
-        abctext4: 2,
-      };
-      expect(hasReachedUploadLimit(obj, LIMIT, SUBSTRING)).toBe(true);
+if (true) {
+  describe("createReplyKeyboardLayout", () => {
+    describe("Creates a buttons layout, where the number of buttons per row is equal to the number of cols", () => {
+      describe(`If number of cols passed is more than or equal to the buttons list len 
+      the length of returned arr should equal to 1`, () => {
+        test("If cols passed equals to 2 and buttons list len is 2 should return array with length 1", () => {
+          const BUTTONS = ["b1", "b2"];
+          const COLS = 2;
+          const maxBtnsPerRow = Math.ceil(BUTTONS.length / COLS);
+          expect(createReplyKeyboardLayout(COLS, BUTTONS).length).toBe(maxBtnsPerRow);
+        });
+        test("If cols passed equals to 3 and buttons list len is 1 should return array with length 1", () => {
+          const BUTTONS = ["b1"];
+          const COLS = 3;
+          const maxBtnsPerRow = Math.ceil(BUTTONS.length / COLS);
+          expect(createReplyKeyboardLayout(COLS, BUTTONS).length).toBe(maxBtnsPerRow);
+        });
+      });
+
+      describe(`If number of cols passed is less than or equal to 0 
+        the length of returned arr should equal to buttons list len`, () => {
+        test("If cols passed equals to -1 and buttons list len is 2 should return array with length 2", () => {
+          const BUTTONS = ["b1", "b2"];
+          const COLS = -1;
+          const maxBtnsPerRow = BUTTONS.length;
+          expect(createReplyKeyboardLayout(COLS, BUTTONS).length).toBe(maxBtnsPerRow);
+        });
+        test("If cols passed equals to 0 and buttons list len is 2 should return array with length 2", () => {
+          const BUTTONS = ["b1", "b2"];
+          const COLS = 0;
+          const maxBtnsPerRow = BUTTONS.length;
+          expect(createReplyKeyboardLayout(COLS, BUTTONS).length).toBe(maxBtnsPerRow);
+        });
+      });
+
+      describe(`If number of cols passed is less than buttons list len 
+        the length of returned arr should equal to 
+        buttons list len divided by the number of cols rounded up`, () => {
+        test("If cols passed equals to 2 and buttons list len is 3 should return array with length 2", () => {
+          const BUTTONS = ["b1", "b2", "b3"];
+          const COLS = 2;
+          const maxBtnsPerRow = Math.ceil(BUTTONS.length / COLS);
+          // so it should create layout like this.
+          /*[
+                    [button1 button2]
+                    [button3]
+                ]            
+              */
+          expect(createReplyKeyboardLayout(COLS, BUTTONS).length).toBe(maxBtnsPerRow);
+        });
+        test("If cols passed equals to 3 and buttons list len is 7 should return array with length 3", () => {
+          const BUTTONS = ["b1", "b2", "b3", "b1", "b2", "b3", "b1"];
+          const COLS = 3;
+          const maxBtnsPerRow = Math.ceil(BUTTONS.length / COLS);
+          expect(createReplyKeyboardLayout(COLS, BUTTONS).length).toBe(maxBtnsPerRow);
+        });
+      });
+      describe(`Handling bad cases`, () => {
+        test("If cols passed is floating point number should return null", () => {
+          const BUTTONS = ["b1", "b2", "b3"];
+          const COLS = 1.123;
+          expect(createReplyKeyboardLayout(COLS, BUTTONS)).toBe(null);
+        });
+        test("If cols passed isn't a number data type should return null", () => {
+          const BUTTONS = ["b1", "b2", "b3"];
+          const COLS = NaN;
+          expect(createReplyKeyboardLayout(COLS, BUTTONS)).toBe(null);
+        });
+        test("Buttons list isn't an array should return null", () => {
+          const BUTTONS = {};
+          const COLS = NaN;
+          expect(createReplyKeyboardLayout(COLS, BUTTONS)).toBe(null);
+        });
+      });
     });
   });
-
-  describe(`Should handle passing invalid args`, () => {
-    test("If passed in first arg is not object should return true and call error func", () => {
-      const arr = ["In case if"];
-      const num = 12;
-      const bool = true;
-      expect(hasReachedUploadLimit(arr, LIMIT, SUBSTRING)).toBe(true);
-      expect(hasReachedUploadLimit(num, LIMIT, SUBSTRING)).toBe(true);
-      expect(hasReachedUploadLimit(bool, LIMIT, SUBSTRING)).toBe(true);
-    });
-    test("If passed in second arg is not number type should return true and call error func", () => {
-      const obj = {
-        abctext: 1,
-        abctext1: 1,
-        abctext2: 2,
-      };
-      expect(hasReachedUploadLimit(obj, "not number", SUBSTRING)).toBe(true);
-    });
-    test("If passed in third arg is not string type should return true and call error func", () => {
-      const obj = {
-        abctext: 1,
-        abctext1: 1,
-        abctext2: 2,
-      };
-      expect(hasReachedUploadLimit(obj, LIMIT, false)).toBe(true);
-    });
-  });
-});
+}

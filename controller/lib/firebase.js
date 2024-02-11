@@ -149,7 +149,47 @@ function sortDates(dates) {
   return dates;
 }
 const getFirebaseApp = () => app;
+// TEST *DNN*
+const uploadScheduleData = async (groupName, timeIntervalsArr) => {
+  try {
+    const GROUPS_COLLECTION_NAME = "groups";
 
+    const uploadData = {
+      schedule: JSON.stringify(timeIntervalsArr),
+    };
+
+    const docRef = doc(firestoreDb, GROUPS_COLLECTION_NAME, groupName);
+    await setDoc(docRef, uploadData);
+
+    return uploadData;
+  } catch (error) {
+    errorHandler(error, "uploadScheduleData", "firebase.js");
+  }
+};
+const getStudyTimeIntervals = async (groupName) => {
+  try {
+    if (typeof groupName !== "string") {
+      errorHandler("groupName is expected to be a string", "getStudyTimeIntervals", "firebase.js");
+      return null;
+    }
+    const GROUPS_COLLECTION_NAME = "groups";
+
+    const docRef = doc(firestoreDb, GROUPS_COLLECTION_NAME, groupName);
+
+    const snapshot = await getDoc(docRef);
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      console.log(data);
+      return data;
+    } else {
+      console.log("doc couldn't be found");
+      return null;
+    }
+  } catch (error) {
+    errorHandler(error, "getStudyTimeIntervals", "firebase.js");
+  }
+};
+// TEST *DNN*
 module.exports = {
   initializeFirebaseApp,
   initFirestoreDb,
@@ -158,4 +198,6 @@ module.exports = {
   getData,
   removePastDates,
   sortDates,
+  uploadScheduleData,
+  getStudyTimeIntervals,
 };

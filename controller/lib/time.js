@@ -1,12 +1,13 @@
 const { WEEKDAYS_RU, SEC_IN_MS, SEC_IN_DAY, DAYS_PER_WEEK } = require("./constants");
 const { errorHandler } = require("./helpers");
+const { getScheduleData } = require("./firebase");
 
 function getLocalUnixTimestamp(timeZoneDiffSec = 0, unixTimestamp) {
   if (!Number.isFinite(timeZoneDiffSec) || !Number.isFinite(unixTimestamp)) {
     errorHandler(
       "timeZoneDiffSec and unixTimestamp expected to be of type number",
       "getLocalUnixTimestamp",
-      "date"
+      "time.js"
     );
     return null;
   }
@@ -15,7 +16,7 @@ function getLocalUnixTimestamp(timeZoneDiffSec = 0, unixTimestamp) {
 }
 function getDate(unixTimestamp, dateString = "") {
   if (!Number.isFinite(unixTimestamp)) {
-    errorHandler("unixTimestamp expected to be of type number", "getDate", "date");
+    errorHandler("unixTimestamp expected to be of type number", "getDate", "time.js");
     return null;
   }
 
@@ -34,9 +35,11 @@ function getDate(unixTimestamp, dateString = "") {
   const month = Number(date.getUTCMonth()) + OFFSET;
   const year = Number(date.getUTCFullYear());
   const weekday = Number(date.getUTCDay());
-
+  const ms = Number(date.getTime());
   const MIN_VAL = 10;
   const time = {
+    dateObj: date,
+    ms,
     day,
     month: month,
     year,
@@ -54,7 +57,7 @@ function getDateUTC5(unixTimestamp) {
 }
 function calculateDateDiff(currentDate, docDate) {
   if (!(currentDate instanceof Date) || !(docDate instanceof Date)) {
-    errorHandler(new TypeError("Date object is expected"), "calculateDateDiff", "date.js");
+    errorHandler(new TypeError("Date object is expected"), "calculateDateDiff", "time.js");
     return null;
   }
 
@@ -97,10 +100,34 @@ function calculateDateDiff(currentDate, docDate) {
       return WEEKDAYS_RU[docDate.getDay()];
   }
 }
+async function getStudyTimeInfo(unixTimestamp, timeIntervals) {
+  if (!Array.isArray(timeIntervals)) {
+    errorHandler("timeIntervals is expected to an array", "getStudyTimeInfo", "time.js");
+    return null;
+  }
+  // gettin local unix timestamp
+  const TIMEZONE_DIFF_SEC = 5 * 3600;
+  const localUnixTimestamp = unixTimestamp + TIMEZONE_DIFF_SEC;
 
+  const timestamp = localUnixTimestamp * 1000;
+  const currentDate = new Date(timestamp);
+
+  currentDate.setHours(0, 0, 0, 0);
+  const unixTimestampResetted = currentDate.getTime() / 1000;
+  console.log(currentDate.getUTCHours());
+  getHoursDiff(unixTimestampResetted, localUnixTimestamp);
+}
+function getHoursDiff(dayStart, localUnixTimestamp) {
+  const pointInTime = 14 * 3600;
+  console.log(pointInTime);
+  console.log(localUnixTimestamp);
+  const relativePointInTime = dayStart + pointInTime;
+  console.log(relativePointInTime - localUnixTimestamp);
+}
 module.exports = {
   getDate,
   getLocalUnixTimestamp,
   getDateUTC5,
   calculateDateDiff,
+  getStudyTimeInfo,
 };

@@ -122,6 +122,15 @@ function sendStartMenu(chatId, menuText = MAIN_MENU_TEXT) {
 
   return sendMessage(chatId, menuText, params);
 }
+function startConversation(chatId, params) {
+  const sendParams = {
+    ...params,
+  };
+  return sendMessage(chatId, INTRODUCTION_TEXT, sendParams);
+}
+async function handleDataSending(chatId, dataToSend) {
+  await sendMessage(chatId, "We'are on our way!");
+}
 
 module.exports = {
   sendMessage,
@@ -131,4 +140,6 @@ module.exports = {
   sendMenuCommands,
   sendDoc,
   sendMultiplePhotos,
+  startConversation,
+  handleDataSending,
 };

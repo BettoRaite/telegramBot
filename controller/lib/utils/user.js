@@ -146,6 +146,35 @@ function deleteUserAfter(userId, timeSec) {
     }, 1000 * timeSec);
   }
 }
+
+function deleteUserAfter5Min(userId) {
+  const user = getUser(userId);
+  const resetTimeSec = 5 * 60;
+
+  if (!user) {
+    errorHandler(new Error("Trying to reset undefined user"), "users", "deleteUserAfter");
+  }
+  if (typeof userId !== "string") {
+    errorHandler(new TypeError("User id must be of type string"), "users", "deleteUserAfter");
+    return null;
+  }
+  const resetKey = user.resetKey;
+  if (!user.hasReset) {
+    console.log("Running delete user after...");
+    user.hasReset = true;
+
+    setTimeout(async () => {
+      if (getResetKey(userId) === resetKey && !getUser(userId)?.isImageUploading) {
+        await sendMessage(userId, EXCEEDED_TIME_LIMIT);
+        sendStartMenu(userId);
+
+        return deleteUser(userId);
+      }
+      console.log("User object has already been deleted.");
+    }, 1000 * resetTimeSec);
+  }
+}
+
 module.exports = {
   addUser,
   setAction,
@@ -157,4 +186,5 @@ module.exports = {
   setImageUploadingToTrue,
   queueImageId,
   queueCaption,
+  deleteUserAfter5Min,
 };

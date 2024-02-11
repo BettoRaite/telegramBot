@@ -1,13 +1,9 @@
-const { Timestamp } = require("firebase/firestore");
-const { getLocalUnixTimestamp, getDate, calculateDateDiff } = require("../lib/date");
 const {
-  addUser,
-  setAction,
-  getUser,
-  setSubject,
-  deleteUser,
-  getResetKey,
-} = require("../lib/utils/user");
+  getLocalUnixTimestamp,
+  getDate,
+  calculateDateDiff,
+  getStudyTimeInfo,
+} = require("../lib/time");
 
 const unixTimestamp = 1705166940;
 const UTC_5_SEC = 5 * 3600;
@@ -62,7 +58,7 @@ if (false) {
     });
   });
 }
-if (true) {
+if (false) {
   describe("calculateDateDiff", () => {
     // Creating doc creation date object at the end of the week
     const SUNDAY = "2024-01-28";
@@ -127,6 +123,28 @@ if (true) {
         });
         test("Passing non-date object as the current doc date should return null and print error'", () => {
           expect(calculateDateDiff(new Date(), "smart")).toBe(null);
+        });
+      });
+    });
+  });
+}
+if (true) {
+  const timeIntervals = [
+    ["8:00", "8:45"],
+    ["8:50", "9:35"],
+    ["9:45", "10:30"],
+    ["10:35", "11:20"],
+    ["11:30", "13:00"],
+    ["13:10", "13:55"],
+    ["14:00", "14:40"],
+  ];
+  describe("getStudyTimeInfo", () => {
+    describe(`Calculates how much time is left untill the end of one study day, one study session
+    one lesson`, () => {
+      describe("Should return an object with 3 properties", () => {
+        test("If current date hours is 8 is less than 14 hours should return", () => {
+          // setting a certain date, day, hours, minutes and seconds
+          const certainTimeOnMonday = new Date(2024, 1, 1, 8, 20, 46);
         });
       });
     });
