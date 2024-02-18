@@ -1,11 +1,12 @@
-require("dotenv").config();
-const express = require("express");
-const { handler } = require("./controller/index");
-const { initializeFirebaseApp, initFirestoreDb } = require("./controller/lib/firebase");
+import "dotenv/config.js";
+import express, { json } from "express";
+
+import { initializeFirebaseApp, initFirestoreDb } from "./controller/lib/firebase.js";
+import handler from "./controller/index.js";
 
 const PORT = process.env.PORT || 8080;
 const app = express();
-app.use(express.json());
+app.use(json());
 
 initializeFirebaseApp();
 // initFirestoreDb();

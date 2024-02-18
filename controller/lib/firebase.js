@@ -1,8 +1,8 @@
-const { initializeApp } = require("firebase/app");
-const { errorHandler } = require("./helpers");
-const { SUBJECT_NAMES, COLLECTION_NAME } = require("./constants");
+import { initializeApp } from "firebase/app";
+import errorHandler from "./helpers.js";
+import { FIREBASE, SUBJECT_NAMES, COLLECTION_NAME } from "./constants.js";
 
-const { getFirestore, doc, setDoc, getDoc, collection } = require("firebase/firestore");
+import { getFirestore, doc, setDoc, getDoc, collection } from "firebase/firestore";
 
 const {
   FIREBASE_API_KEY,
@@ -26,8 +26,9 @@ const firebaseConfig = {
 let app;
 let firestoreDb;
 
-const initializeFirebaseApp = () => {
+export const initializeFirebaseApp = () => {
   try {
+    console.log("Firebase app has been initialized!");
     app = initializeApp(firebaseConfig);
     firestoreDb = getFirestore();
 
@@ -36,7 +37,7 @@ const initializeFirebaseApp = () => {
     errorHandler(error, "initializeFirebaseApp", "firebase.js");
   }
 };
-const initFirestoreDb = async () => {
+export const initFirestoreDb = async () => {
   try {
     for (const subject of SUBJECT_NAMES) {
       const subjectsRef = collection(firestoreDb, COLLECTION_NAME);
@@ -46,7 +47,7 @@ const initFirestoreDb = async () => {
     errorHandler(error, "initFirestoreDb", "firebase.js");
   }
 };
-const uploadProccessedData = async (subjectName, date, uploadData) => {
+export const uploadProccessedData = async (subjectName, date, uploadData) => {
   try {
     const subjectData = await getData(subjectName);
     if (subjectData == null) {
@@ -65,7 +66,7 @@ const uploadProccessedData = async (subjectName, date, uploadData) => {
   }
 };
 
-const getData = async (subjectName, date = "") => {
+export const getData = async (subjectName, date = "") => {
   try {
     if (typeof subjectName !== "string" || typeof date !== "string") {
       errorHandler("Subject name and date must be of type string", "getData", "firebase");
@@ -97,7 +98,7 @@ const getData = async (subjectName, date = "") => {
   }
 };
 
-function removePastDates(subjectData) {
+export function removePastDates(subjectData) {
   const MAX_FIELDS_PER_SUBJECT = 3;
   const dates = Object.keys(subjectData);
 
@@ -109,7 +110,7 @@ function removePastDates(subjectData) {
   }
   return subjectData;
 }
-function sortDates(dates) {
+export function sortDates(dates) {
   if (!Array.isArray(dates)) {
     return null;
   }
@@ -148,9 +149,41 @@ function sortDates(dates) {
   }
   return dates;
 }
-const getFirebaseApp = () => app;
+export function toSortedDates(dates) {
+  if (!Array.isArray(dates)) {
+    return null;
+  }
+  const copyDates = Object.assign([], dates);
+
+  copyDates.sort((a, b) => {
+    const SEPARATOR = "-";
+    const [year1, month1, day1] = a.split(SEPARATOR);
+    const [year2, month2, day2] = b.split(SEPARATOR);
+    console.log(`a: ${a} b: ${b}`);
+    if (year1 > year2) {
+      return 1;
+    } else if (year1 < year2) {
+      return -1;
+    }
+    if (month1 > month2) {
+      return 1;
+    } else if (month1 < month2) {
+      return -1;
+    }
+    if (day1 > day2) {
+      return 1;
+    } else if (day1 < day2) {
+      return -1;
+    }
+    return 0;
+  });
+
+  return copyDates;
+}
+
+export const getFirebaseApp = () => app;
 // TEST *DNN*
-const uploadScheduleData = async (groupName, timeIntervalsArr) => {
+export const uploadScheduleData = async (groupName, timeIntervalsArr) => {
   try {
     const GROUPS_COLLECTION_NAME = "groups";
 
@@ -166,7 +199,7 @@ const uploadScheduleData = async (groupName, timeIntervalsArr) => {
     errorHandler(error, "uploadScheduleData", "firebase.js");
   }
 };
-const getStudyTimeIntervals = async (groupName) => {
+export const getStudyTimeIntervals = async (groupName) => {
   try {
     if (typeof groupName !== "string") {
       errorHandler("groupName is expected to be a string", "getStudyTimeIntervals", "firebase.js");
@@ -189,15 +222,46 @@ const getStudyTimeIntervals = async (groupName) => {
     errorHandler(error, "getStudyTimeIntervals", "firebase.js");
   }
 };
-// TEST *DNN*
-module.exports = {
-  initializeFirebaseApp,
-  initFirestoreDb,
-  getFirebaseApp,
-  uploadProccessedData,
-  getData,
-  removePastDates,
-  sortDates,
-  uploadScheduleData,
-  getStudyTimeIntervals,
-};
+
+export async function getUserGroupName(userId) {
+  try {
+    if (typeof userId !== "string") {
+      throw new TypeError("userId is expected to be a string");
+    }
+    const docRef = doc(firestoreDb, FIREBASE.USERS_COLLECTION_NAME, userId);
+
+    const snapshot = await getDoc(docRef);
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      return data.groupName;
+    } else {
+      throw new Error("no such user");
+    }
+  } catch (error) {
+    errorHandler(error, "getUserGroupName", "firebase.js");
+    return null;
+  }
+}
+export async function getGroupScheduleData(groupName) {
+  try {
+    if (typeof groupName !== "string") {
+      throw new TypeError("groupName is expected to be a string");
+    }
+    const docRef = doc(firestoreDb, FIREBASE.GROUPS_COLLECTION_NAME, groupName);
+
+    const snapshot = await getDoc(docRef);
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      return data;
+    } else {
+      throw new Error("no such group");
+    }
+  } catch (error) {
+    errorHandler(error, "getUserGroupName", "firebase.js");
+    return null;
+  }
+}
+
+export function getUserTimezoneHours() {
+  return 5;
+}

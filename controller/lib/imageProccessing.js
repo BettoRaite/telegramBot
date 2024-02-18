@@ -1,6 +1,6 @@
-const { errorHandler } = require("./helpers");
+import errorHandler from "./helpers.js";
 
-function getLargestImageId(images) {
+export default function getLargestImageId(images) {
   try {
     const imageMetadataArr = [];
     // recursively getting all ids and size, independable of object structure
@@ -45,5 +45,3 @@ function getLargestImageId(images) {
     return "";
   }
 }
-
-module.exports = { getLargestImageId };

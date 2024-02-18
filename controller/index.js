@@ -1,13 +1,18 @@
-const { errorHandler } = require("./lib/helpers");
-const { handleMessage, handleAction } = require("./lib/telegram");
-const { sendMessage, sendSubjectsOptionMenu, sendStartMenu } = require("./lib/send");
-const { uploadProccessedData, getData } = require("./lib/firebase");
-const { setAction, setSubject, getUser, deleteUserAfter } = require("./lib/utils/user");
-const { HOMEWORK_UPLOAD_MESSAGE, NO_ACTION_CHOOSEN } = require("./lib/constantMessages");
-const { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION, TEXT_DATA_PREFIX } = require("./lib/constants");
-const uniqid = require("uniqid");
+import errorHandler from "./lib/helpers.js";
+import { handleMessage, handleAction } from "./lib/telegram.js";
+import { sendMessage, sendSubjectsOptionMenu, sendStartMenu } from "./lib/send.js";
+import {
+  uploadProccessedData,
+  getData,
+  getUserGroupName,
+  getGroupScheduleData,
+} from "./lib/firebase.js";
+import { setAction, setSubject, getUser, deleteUserAfter } from "./lib/utils/user.js";
+import { HOMEWORK_UPLOAD_MESSAGE, NO_ACTION_CHOOSEN } from "./lib/constantMessages.js";
+import { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION, TEXT_DATA_PREFIX } from "./lib/constants.js";
+import uniqid from "uniqid";
 
-async function handler(req, method) {
+export default async function handler(req, method) {
   try {
     const GET_METHOD = "GET";
     const POST_METHOD = "POST";
@@ -35,19 +40,19 @@ async function handler(req, method) {
     errorHandler(error, "mainIndexHandler", "index");
   }
 }
+
 async function handleGet(path) {
   const PROD = process.env.PROD;
   if (PROD) {
     switch (path) {
-      case "/test-upload-text":
-        const uniqueTextId = TEXT_DATA_PREFIX + uniqid();
-        await uploadProccessedData(SUBJECT_NAMES[0], "27-1-2024", {
-          [uniqueTextId]: "some data",
-        });
-        return "Data uploaded successfully";
-      case "/test-get":
-        const data = await getData(SUBJECT_NAMES[0]);
-        return JSON.stringify(data, null, 4);
+      case "/test/users/getGroupName":
+        const userGroupName = await getUserGroupName("test");
+        console.log("User group:", userGroupName);
+        return userGroupName;
+      case "/test/groups/getGroupScheduleData":
+        const scheduleData = await getGroupScheduleData("test");
+        console.log("Schedule data:", scheduleData);
+        return scheduleData;
     }
   }
   return "Telegram bot server - Sonya.js";
@@ -100,9 +105,6 @@ async function handleCallbackQuery(callbackQuery) {
 
     return;
   } catch (error) {
-    errorHandler(error, "handleCallbackQuery");
+    errorHandler(error, "handleCallbackQuery", "index.js");
   }
 }
-JSON.stringify;
-
-module.exports = { handler };

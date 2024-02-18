@@ -1,28 +1,24 @@
-const { errorHandler } = require("./helpers");
-const { getData, uploadScheduleData } = require("./firebase");
-const { sendMessage, sendStartMenu, handleDataSending } = require("./send");
-const { handleTextDataUpload, handleImageDataUpload } = require("./dataUpload");
-const { getLargestImageId } = require("./imageProccessing");
-const { getUser, deleteUser, queueImageId, queueCaption } = require("./utils/user");
-
-const { getDateUTC5 } = require("./time");
-const ADMIN_IDS = process.env.ADMIN_IDS;
-
-const { handleDataRetrival } = require("./dataRetrieval");
-const { handleCommand } = require("./commandHandling");
-
-// CONSTANS
-const {
+import errorHandler from "./helpers.js";
+import { getData, uploadScheduleData } from "./firebase.js";
+import { sendMessage, sendStartMenu, handleDataSending } from "./send.js";
+import { handleTextDataUpload, handleImageDataUpload } from "./dataUpload.js";
+import getLargestImageId from "./imageProccessing.js";
+import { getUser, deleteUser, queueImageId, queueCaption } from "./utils/user.js";
+import { getDateUTC5 } from "./time.js";
+import { handleDataRetrival } from "./dataRetrieval.js";
+import { handleCommand } from "./commandHandling.js";
+import {
   FATAL_ERROR_MESSAGE,
   ERROR_DOC_UPLOAD_MESSAGE,
   INVALID_MESSAGE,
-
   HOMEWORK_UPLOAD_MESSAGE,
   ACCESS_RESTRICTED_MESSAGE,
-} = require("./constantMessages");
-const { UPLOAD_ACTION, GET_ACTION, ALL_COMMANDS_LIST, SET_TIME_ACTION } = require("./constants");
+} from "./constantMessages.js";
+import { UPLOAD_ACTION, GET_ACTION, ALL_COMMANDS_LIST, SET_TIME_ACTION } from "./constants.js";
 
-async function handleMessage(messageObj) {
+const ADMIN_IDS = process.env.ADMIN_IDS;
+
+export async function handleMessage(messageObj) {
   const messageText = messageObj.text ?? "";
   const images = messageObj.photo;
   const imageDoc = messageObj.document;
@@ -39,10 +35,12 @@ async function handleMessage(messageObj) {
     console.log(chatId);
     const user = getUser(chatId) ?? {};
 
+    const unixTimestamp = messageObj.date;
+
     if (messageText.startsWith("/") || ALL_COMMANDS_LIST.includes(messageText)) {
       let command = messageText;
 
-      return handleCommand(chatId, command, user);
+      return handleCommand(chatId, command, user, unixTimestamp);
     }
 
     if (user.action) {
@@ -62,7 +60,6 @@ async function handleMessage(messageObj) {
       if (caption) {
         queueCaption(chatId, caption);
       }
-      const unixTimestamp = messageObj.date;
 
       const params = {
         chatId,
@@ -82,7 +79,7 @@ async function handleMessage(messageObj) {
     errorHandler(error, "handleMessage");
   }
 }
-async function handleAction(params) {
+export async function handleAction(params) {
   const { chatId, subjectName, action, messageText, hasImage, unixTimestamp } = params;
 
   switch (action) {
@@ -166,9 +163,3 @@ function processSchedule(schedule) {
   });
   return timeIntervalsArr;
 }
-// TEST *DNN*
-
-module.exports = {
-  handleMessage,
-  handleAction,
-};

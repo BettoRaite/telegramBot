@@ -1,11 +1,10 @@
-const { errorHandler } = require("./helpers");
-const { getData, sortDates } = require("./firebase");
-const { getDate, getLocalUnixTimestamp, getDateUTC5, calculateDateDiff } = require("./time");
+import errorHandler from "./helpers.js";
+import { getData, sortDates, getUserGroupName, getGroupScheduleData } from "./firebase.js";
+import { getDate, calculateDateDiff } from "./time.js";
+import { FATAL_ERROR_MESSAGE, NO_DATA_FOUND } from "./constantMessages.js";
+import { IMAGE_DATA_PREFIX, TEXT_DATA_PREFIX, CAPTION_DATA_PREFIX } from "./constants.js";
 
-const { FATAL_ERROR_MESSAGE, NO_DATA_FOUND } = require("./constantMessages");
-const { IMAGE_DATA_PREFIX, TEXT_DATA_PREFIX, CAPTION_DATA_PREFIX } = require("./constants");
-
-async function handleDataRetrival(subjectName) {
+export async function handleDataRetrival(subjectName) {
   const subjectData = await getData(subjectName);
   // Checking whether 'subjectData' is plain object and not an array *DDN*
   if (subjectData instanceof Object && !(subjectData instanceof Array)) {
@@ -78,6 +77,8 @@ function formatText(dateText, reversedDate, textData) {
   }
   return formattedText;
 }
-module.exports = {
-  handleDataRetrival,
-};
+export async function handleScheduleDataFetching(chatId) {
+  const groupName = await getUserGroupName(chatId);
+  const scheduleData = await getGroupScheduleData(groupName);
+  return scheduleData;
+}

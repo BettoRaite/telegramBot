@@ -1,24 +1,25 @@
-const { errorHandler } = require("./helpers");
-const { sendMessage, sendStartMenu, startConversation } = require("./send");
-const { deleteUser, deleteUserAfter5Min, setAction } = require("./utils/user");
-const { getStudyTimeInfo } = require("./time");
-// CONSTANTS
-const {
+import errorHandler from "./helpers.js";
+import { sendMessage, sendStartMenu, startConversation } from "./send.js";
+import { deleteUser, deleteUserAfter5Min, setAction } from "./utils/user.js";
+import { getStudyTimeInfo } from "./time.js";
+import { handleScheduleDataFetching } from "./dataRetrieval.js";
+import { processScheduleData } from "./dataProcessing.js";
+import {
   CANCEL_OPERATION_SUCCESS_MESSAGE,
   CANCEL_OPERATION_ERROR_MESSAGE,
   UNKNOWN_COMMAND,
   SONYA_ABOUT_TEXT,
   SET_TIME_COMMAND_TEXT,
-} = require("./constantMessages");
-const {
+} from "./constantMessages.js";
+import {
   SET_TIME_COMMAND,
   TIME_COMMAND,
   BACK_COMMAND,
   MAIN_COMMANDS_LIST,
   SET_TIME_ACTION,
-} = require("./constants");
+} from "./constants.js";
 
-async function handleCommand(chatId, command, user) {
+export async function handleCommand(chatId, command, user, unixTimestamp) {
   const { action, subjectName } = user;
 
   if (command.startsWith("/")) {
@@ -50,9 +51,8 @@ async function handleCommand(chatId, command, user) {
       await sendMessage(chatId, "Поняла 😚");
       return sendStartMenu(chatId);
     case TIME_COMMAND:
-      const currentDate = new Date();
-      const timeLeft = await getStudyTimeInfo(currentDate);
-      await sendMessage(chatId, timeLeft);
+      unixTimestamp = 1708057422;
+      handleTimeCommand(chatId, unixTimestamp);
       return;
     case SET_TIME_COMMAND: {
       const replyBtns = createReplyButtonsArr(BACK_COMMAND);
@@ -96,7 +96,7 @@ async function handleCommand(chatId, command, user) {
       return;
   }
 }
-function createReplyKeyboardLayout(cols, buttonsList) {
+export function createReplyKeyboardLayout(cols, buttonsList) {
   if (!Array.isArray(buttonsList)) {
     errorHandler(
       "buttonsList is expected to be an array",
@@ -129,7 +129,7 @@ function createReplyKeyboardLayout(cols, buttonsList) {
   }
   return layout;
 }
-function createReplyButtonsArr(...buttonsList) {
+export function createReplyButtonsArr(...buttonsList) {
   const replyButtonsArr = [];
   // iterating through commands list *DDN*
   for (const btnName of buttonsList) {
@@ -149,8 +149,17 @@ function createReplyButtonsArr(...buttonsList) {
 
   return replyButtonsArr;
 }
-module.exports = {
-  handleCommand,
-  createReplyButtonsArr,
-  createReplyKeyboardLayout,
-};
+async function handleTimeCommand(chatId, unixTimestamp) {
+  try {
+    const scheduleData = await handleScheduleDataFetching(chatId);
+
+    const processedScheduleData = processScheduleData(scheduleData, unixTimestamp);
+    console.log(processedScheduleData);
+    const localUnixTimestamp = unixTimestamp + 5 * 3600;
+
+    const timeInfo = getStudyTimeInfo(localUnixTimestamp, processedScheduleData);
+    await sendMessage(chatId, timeInfo);
+  } catch (err) {
+    console.log(err);
+  }
+}

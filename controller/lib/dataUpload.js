@@ -1,13 +1,13 @@
-const { UPLOAD_SUCCESS_MESSAGE, UPLOAD_LIMIT_REACHED_MESSAGE } = require("./constantMessages");
-const { IMAGE_DATA_PREFIX, TEXT_DATA_PREFIX, CAPTION_DATA_PREFIX } = require("./constants");
-const { errorHandler } = require("./helpers");
-const { uploadProccessedData } = require("./firebase");
-const { sendMessage, sendStartMenu } = require("./send");
+import { UPLOAD_SUCCESS_MESSAGE, UPLOAD_LIMIT_REACHED_MESSAGE } from "./constantMessages.js";
+import { IMAGE_DATA_PREFIX, TEXT_DATA_PREFIX, CAPTION_DATA_PREFIX } from "./constants.js";
+import errorHandler from "./helpers.js";
+import { uploadProccessedData } from "./firebase.js";
+import { sendMessage, sendStartMenu } from "./send.js";
 
-const { getUser, deleteUser, setImageUploadingToTrue } = require("./utils/user");
-const uniqid = require("uniqid");
+import { getUser, deleteUser, setImageUploadingToTrue } from "./utils/user.js";
+import uniqid from "uniqid";
 
-async function handleTextDataUpload(params) {
+export async function handleTextDataUpload(params) {
   const { chatId, subjectName, strDate, messageText, storageContent } = params;
   // Check if the number of text fields more than the limit *DDN*
   const TEXT_UPLOAD_LIMIT = 3;
@@ -38,7 +38,7 @@ async function handleTextDataUpload(params) {
   await sendMessage(chatId, UPLOAD_SUCCESS_MESSAGE);
   return sendStartMenu(chatId);
 }
-async function handleImageDataUpload(params) {
+export async function handleImageDataUpload(params) {
   const { chatId, subjectName, strDate, storageContent } = params;
   // Check if the number of image fields more than the limit *DDN*
   const IMAGE_UPLOAD_LIMIT = 10;
@@ -171,9 +171,4 @@ function countDataLeftToUpload(storageContent, limit, targetName) {
   // Substracting total data from data limit *DDN*
   return limit - targetsTotal;
 }
-function handleScheduleUpload() {}
-module.exports = {
-  handleTextDataUpload,
-  handleImageDataUpload,
-  handleScheduleUpload,
-};
+export function handleScheduleUpload() {}

@@ -1,11 +1,20 @@
-require("dotenv").config();
-const ngrok = require("ngrok");
-const axios = require("axios");
+import ngrok from "ngrok";
+import axios from "axios";
+import errorHandler from "./controller/lib/helpers.js";
+import "dotenv/config";
 
-BOT_TOKEN = process.env.BOT_TOKEN;
-PORT = process.env.PORT;
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const PORT = process.env.PORT || 8080;
 
 (async function startNgrokAndSetWebhook() {
+  if (!BOT_TOKEN || !PORT) {
+    errorHandler(
+      "Undefined BOT_TOKEN or PORT",
+      "startNgrokAndSetWebhook",
+      "startNgrokAndSetWebhook"
+    );
+    return;
+  }
   const url = await ngrok.connect(PORT);
   if (url) {
     try {
@@ -13,6 +22,7 @@ PORT = process.env.PORT;
       const response = await axios(WEBHOOK_URL);
       if (response.data.ok) {
         console.log("Webhook was set");
+        console.log("ngrok url:", url);
       } else {
         console.log("Couldn't set webhook");
       }

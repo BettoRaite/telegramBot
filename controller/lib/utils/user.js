@@ -1,10 +1,10 @@
-const { EXCEEDED_TIME_LIMIT } = require("../constantMessages");
-const { errorHandler } = require("../helpers");
-const { sendMessage, sendStartMenu } = require("../send");
+import { EXCEEDED_TIME_LIMIT } from "../constantMessages.js";
+import errorHandler from "../helpers.js";
+import { sendMessage, sendStartMenu } from "../send.js";
 
 const users = new Map();
 
-function addUser(userId) {
+export function addUser(userId) {
   if (typeof userId !== "string") {
     errorHandler(new TypeError("User id must be of type string"), "users", "addUser");
   }
@@ -25,7 +25,7 @@ function addUser(userId) {
   return users.get(userId);
 }
 
-function setAction(userId, actionName) {
+export function setAction(userId, actionName) {
   if (typeof userId !== "string" || typeof actionName !== "string") {
     errorHandler(new TypeError("User id must be of type string"), "users", "setAction");
     return null;
@@ -38,7 +38,7 @@ function setAction(userId, actionName) {
   user.action = actionName;
   return users.get(userId);
 }
-function setSubject(userId, subjectName) {
+export function setSubject(userId, subjectName) {
   if (typeof userId !== "string" || typeof subjectName !== "string") {
     errorHandler(new TypeError("User id must be of type string"), "setSubject", "user.js");
     return null;
@@ -50,7 +50,7 @@ function setSubject(userId, subjectName) {
   user.subjectName = subjectName;
   return users.get(userId);
 }
-function setImageUploadingToTrue(userId) {
+export function setImageUploadingToTrue(userId) {
   // If image proccessing true we don't delete user metadata, but wait for text message
   // since the number of images might be undefined
   if (typeof userId !== "string") {
@@ -68,7 +68,7 @@ function setImageUploadingToTrue(userId) {
   user.isImageUploading = true;
   return users.get(userId);
 }
-function queueImageId(userId, imageId) {
+export function queueImageId(userId, imageId) {
   if (typeof imageId !== "string" || typeof userId !== "string") {
     errorHandler(new TypeError("image id must be of type string"), "users", "queueImageId");
     return null;
@@ -82,7 +82,7 @@ function queueImageId(userId, imageId) {
   imageIdsQueue.push(imageId);
   return imageIdsQueue;
 }
-function queueCaption(userId, caption) {
+export function queueCaption(userId, caption) {
   if (typeof caption !== "string" || typeof userId !== "string") {
     errorHandler(new TypeError("caption must be of type string"), "queueCaption", "user.js");
     return null;
@@ -95,14 +95,14 @@ function queueCaption(userId, caption) {
   user.caption = caption;
   return user;
 }
-function getUser(userId) {
+export function getUser(userId) {
   if (typeof userId !== "string") {
     errorHandler(new TypeError("User id must be of type string"), "users", "getUser");
     return null;
   }
   return users.get(userId);
 }
-function getResetKey(userId) {
+export function getResetKey(userId) {
   if (typeof userId !== "string") {
     errorHandler(new TypeError("User id must be of type string"), "users", "getResetKey");
     return null;
@@ -110,7 +110,7 @@ function getResetKey(userId) {
   return users.get(userId)?.resetKey;
 }
 
-function deleteUser(userId) {
+export function deleteUser(userId) {
   console.log("Deleting user.\n", JSON.stringify(getUser(userId), null, 4));
 
   if (typeof userId !== "string") {
@@ -120,7 +120,7 @@ function deleteUser(userId) {
   return users.delete(userId);
 }
 
-function deleteUserAfter(userId, timeSec) {
+export function deleteUserAfter(userId, timeSec) {
   const user = getUser(userId);
 
   if (!user) {
@@ -147,7 +147,7 @@ function deleteUserAfter(userId, timeSec) {
   }
 }
 
-function deleteUserAfter5Min(userId) {
+export function deleteUserAfter5Min(userId) {
   const user = getUser(userId);
   const resetTimeSec = 5 * 60;
 
@@ -174,17 +174,3 @@ function deleteUserAfter5Min(userId) {
     }, 1000 * resetTimeSec);
   }
 }
-
-module.exports = {
-  addUser,
-  setAction,
-  getUser,
-  setSubject,
-  deleteUser,
-  deleteUserAfter,
-  getResetKey,
-  setImageUploadingToTrue,
-  queueImageId,
-  queueCaption,
-  deleteUserAfter5Min,
-};

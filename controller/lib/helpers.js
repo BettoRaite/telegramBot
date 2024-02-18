@@ -1,4 +1,4 @@
-function errorHandler(error, funcName, from) {
+export default function errorHandler(error, funcName, from) {
   const loggerFunction = console.log;
 
   loggerFunction("\n\n::::START::::");
@@ -19,6 +19,3 @@ function errorHandler(error, funcName, from) {
   }
   loggerFunction("::::END::::\n\n");
 }
-module.exports = {
-  errorHandler,
-};

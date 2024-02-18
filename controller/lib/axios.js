@@ -1,6 +1,6 @@
-const axios = require("axios");
+import axios from "axios";
 
-function getAxiosInstance(BASE_URL, headers = {}) {
+export default function getAxiosInstance(BASE_URL, headers = {}) {
   return {
     get(method, params) {
       return axios.get(`/${method}`, {
@@ -20,5 +20,3 @@ function getAxiosInstance(BASE_URL, headers = {}) {
     },
   };
 }
-
-module.exports = { getAxiosInstance };

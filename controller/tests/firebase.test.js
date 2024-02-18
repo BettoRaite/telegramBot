@@ -1,17 +1,19 @@
-const { sortDates } = require("../lib/firebase");
+import { assert } from "chai";
+import { toSortedDates } from "../lib/firebase.js";
 
-if (false) {
+if (true) {
   describe("sortDates", () => {
-    describe(`sorts string dates arr by year, month, day in the format ["day-month-year"]`, () => {
-      test("", () => {
-        const dates = ["20-1-2024", "12-1-2025", "12-1-2024"];
-        const sortedDates = ["12-1-2024", "20-1-2024", "12-1-2025"];
-        expect(String(sortDates(dates))).toBe(String(sortedDates));
+    describe(`sorts string dates arr in an ascending order by year, month, day in the format ["year-month-day"]`, () => {
+      it("test1", () => {
+        const dates = ["2024-01-20", "2025-01-12", "2024-01-12"];
+        const sortedDates = ["2024-01-12", "2024-01-20", "2025-01-12"];
+
+        assert.strictEqual(String(toSortedDates(dates)), String(sortedDates));
       });
-      test("", () => {
-        const dates = ["14-11-2024", "20-1-2024", "12-1-2025", "12-1-2024"];
-        const sortedDates = ["12-1-2024", "20-1-2024", "14-11-2024", "12-1-2025"];
-        expect(String(sortDates(dates))).toBe(String(sortedDates));
+      it("test2", () => {
+        const dates = ["2024-01-21", "2025-01-12", "2025-01-13", "2026-05-12", "2017-01-12"];
+        const sortedDates = ["2017-01-12", "2024-01-21", "2025-01-12", "2025-01-13", "2026-05-12"];
+        assert.strictEqual(String(toSortedDates(dates)), String(sortedDates));
       });
     });
   });

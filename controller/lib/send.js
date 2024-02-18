@@ -1,27 +1,22 @@
-const { getAxiosInstance } = require("./axios");
-const { errorHandler } = require("./helpers");
-const {
+import getAxiosInstance from "./axios.js";
+import errorHandler from "./helpers.js";
+import {
   MAIN_MENU_TEXT,
-  HOMEWORK_UPLOAD_MESSAGE,
-  UPLOAD_SUCCESS_MESSAGE,
-  CANCEL_OPERATION_SUCCESS_MESSAGE,
-  ERROR_MESSAGE,
-  CANCEL_OPERATION_ERROR_MESSAGE,
-  ERROR_DOC_UPLOAD_MESSAGE,
-  TEXT_LIMIT_UPLOAD_REACHED_MESSAGE,
-  INVALID_MESSAGE,
   INTRODUCTION_TEXT,
   BTN_TEXT_GET_ACTION,
   BTN_TEXT_UPLOAD_ACTION,
   SUBJECTS_MENU_TEXT,
-} = require("./constantMessages");
-const { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION } = require("./constants");
+} from "./constantMessages.js";
+import { SUBJECT_NAMES, UPLOAD_ACTION, GET_ACTION } from "./constants.js";
 
 const MY_TOKEN = process.env.BOT_TOKEN;
 const BASE_URL = `https://api.telegram.org/bot${MY_TOKEN}`;
 const axiosInstance = getAxiosInstance(BASE_URL);
 
-function sendMessage(chatId, messageText, params = {}) {
+export async function sendMessage(chatId, messageText, params = {}) {
+  const MY_TOKEN = process.env.BOT_TOKEN;
+  const BASE_URL = `https://api.telegram.org/bot${MY_TOKEN}`;
+  const axiosInstance = getAxiosInstance(BASE_URL);
   if (!(params instanceof Object && !(params instanceof Array))) {
     errorHandler(TypeError("Params must be of type object"), "sendMessage", "axios");
     return;
@@ -42,12 +37,10 @@ function sendMessage(chatId, messageText, params = {}) {
     reply_markup: JSON.stringify(reply_markup),
   };
 
-  return axiosInstance.get("sendMessage", sendMessageParams).catch((ex) => {
-    errorHandler(ex, "sendMessage", "axios");
-  });
+  await axiosInstance.get("sendMessage", sendMessageParams);
 }
 
-function sendPhoto(chatId, imageId) {
+export function sendPhoto(chatId, imageId) {
   return axiosInstance
     .post("sendPhoto", {
       chat_id: chatId,
@@ -57,7 +50,7 @@ function sendPhoto(chatId, imageId) {
       errorHandler(ex, "sendPhoto", "axios");
     });
 }
-function sendMultiplePhotos(chatId, mediaArr) {
+export function sendMultiplePhotos(chatId, mediaArr) {
   return axiosInstance
     .post("sendMediaGroup", {
       chat_id: chatId,
@@ -67,7 +60,7 @@ function sendMultiplePhotos(chatId, mediaArr) {
       errorHandler(ex, "sendMultiplePhotos", "axios");
     });
 }
-function sendDoc(chatId, docId) {
+export function sendDoc(chatId, docId) {
   return axiosInstance
     .post("sendDocument", {
       chat_id: chatId,
@@ -78,13 +71,13 @@ function sendDoc(chatId, docId) {
     });
 }
 
-function sendSubjectsOptionMenu(chatId) {
+export function sendSubjectsOptionMenu(chatId) {
   const replyMarkup = {
     inline_keyboard: [],
   };
 
   for (const subjectName of SUBJECT_NAMES) {
-    capSubjectName = subjectName.at(0).toUpperCase() + subjectName.slice(1);
+    const capSubjectName = subjectName.at(0).toUpperCase() + subjectName.slice(1);
     const button = [{ text: capSubjectName, callback_data: subjectName }];
     replyMarkup.inline_keyboard.push(button);
   }
@@ -94,7 +87,7 @@ function sendSubjectsOptionMenu(chatId) {
   return sendMessage(chatId, SUBJECTS_MENU_TEXT, params);
 }
 
-function sendMenuCommands(chatId, menuText = MAIN_MENU_TEXT) {
+export function sendMenuCommands(chatId, menuText = MAIN_MENU_TEXT) {
   const params = {
     reply_markup: {
       resize_keyboard: true,
@@ -108,7 +101,7 @@ function sendMenuCommands(chatId, menuText = MAIN_MENU_TEXT) {
   return sendMessage(chatId, menuText, null);
 }
 
-function sendStartMenu(chatId, menuText = MAIN_MENU_TEXT) {
+export function sendStartMenu(chatId, menuText = MAIN_MENU_TEXT) {
   const params = {
     reply_markup: {
       inline_keyboard: [
@@ -122,24 +115,12 @@ function sendStartMenu(chatId, menuText = MAIN_MENU_TEXT) {
 
   return sendMessage(chatId, menuText, params);
 }
-function startConversation(chatId, params) {
+export function startConversation(chatId, params) {
   const sendParams = {
     ...params,
   };
   return sendMessage(chatId, INTRODUCTION_TEXT, sendParams);
 }
-async function handleDataSending(chatId, dataToSend) {
+export async function handleDataSending(chatId, dataToSend) {
   await sendMessage(chatId, "We'are on our way!");
 }
-
-module.exports = {
-  sendMessage,
-  sendPhoto,
-  sendSubjectsOptionMenu,
-  sendStartMenu,
-  sendMenuCommands,
-  sendDoc,
-  sendMultiplePhotos,
-  startConversation,
-  handleDataSending,
-};
