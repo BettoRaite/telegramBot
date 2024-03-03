@@ -6,8 +6,6 @@ import { filterThisWeekdayStudySchedule, processTimeInfo } from "./dataProcessin
 import { COMMANDS, BOT_MESSAGES_LIST } from "./constants.js";
 import { isObject } from "./utils/typeChecking.js";
 
-import Bugsnag from "@bugsnag/js";
-
 const USER_ID = process.env.USER_ID;
 
 export const createReplyKeyboardLayout = (cols, buttonsList) => {
