@@ -24,37 +24,62 @@ export const WEEKDAYS_RU = [
   "суббота",
 ];
 
-// ACTION NAMES
-export const UPLOAD_ACTION = "upload-homework";
-export const GET_ACTION = "get-homework";
-export const SET_TIME_ACTION = "set-time";
-export const TEXT_DATA_PREFIX = "text";
-export const IMAGE_DATA_PREFIX = "image";
-export const CAPTION_DATA_PREFIX = "caption";
-export const SCHEDULE_COMMAND = "🗒 Расписание";
-export const TIME_COMMAND = "⏱ Время";
-export const SETTINGS_COMMAND = "⚙️ Настройки";
-export const SET_TIME_COMMAND = "🔔 Звонки";
-export const BACK_COMMAND = "🔙Обратно";
-export const MAIN_COMMANDS_LIST = [
-  SCHEDULE_COMMAND,
-  TIME_COMMAND,
-  SETTINGS_COMMAND,
-  SET_TIME_COMMAND,
-];
-export const ALL_COMMANDS_LIST = [...MAIN_COMMANDS_LIST, BACK_COMMAND];
-export const SEC_IN_MS = 1000;
-export const SEC_IN_DAY = 86400;
-export const DAYS_PER_WEEK = 7;
+export const ACTIONS = {
+  UPLOAD_ACTION: "upload-homework",
+  GET_ACTION: "get-homework",
+  SET_TIME_ACTION: "set-time",
+};
+
+export const DATA_PREFIXES = {
+  text: "text",
+  image: "image",
+  caption: "caption",
+};
+
+export const COMMANDS = {
+  schedule: "🗒 Расписание",
+  time: "⏱ Время",
+  settings: "⚙️ Настройки",
+  setTime: "🔔 Звонки",
+  back: "🔙Обратно",
+  start: "start",
+};
 
 export const TIME = {
-  SEC_TO_MS: 1000,
-  MIN_TO_SEC: 60,
-  HOUR_TO_SEC: 3600,
-  MIN_IN_HOUR: 24,
-  WEEKDAYS: ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+  sec_to_ms: 1000,
+  min_to_sec: 60,
+  hours_to_sec: 3600,
+  day_to_sec: 24 * 3600,
+  weekdays: ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+  hours_per_day: 24,
+  min_per_hour: 60,
 };
-export const FIREBASE = {
-  USERS_COLLECTION_NAME: "users",
-  GROUPS_COLLECTION_NAME: "groups",
+
+export const FIREBASE_COLLECTIONS = {
+  users: "users",
+  groups: "groups",
+};
+export const BOT_MESSAGES_LIST = {
+  unknown_command: "😵‍💫 Данная комманда не существует.",
+  intro_text: `Привет, ну что узнаем время на сегодня? 🤓`,
+  bad_command: `😵‍💫 Кажись, вы немного перепутали команды... ✍️ Попробуйте ещё раз.
+  
+👉 либо нажмите на /main чтобы вернутся в главное меню`,
+  bad_message: `😞 К сожалению, я только понимаю определенные команды)
+  
+👉 Как насчет, вы мне подарите свой мозг и я наконец-то захвачу этот мир? 😏
+        `,
+  success: "✅ Готово",
+  fatal_error: "❌ Возникла неприятная ошибка! Прошу немедленно сообщить её разработчику! 🧐",
+  unsupported: "Упс...пока что данная функция не поддерживается ⬇️",
+  no_study_schedules: `Кажись, админ группы не установил расписание звонков. KILL 'IM!`,
+  before_study_day: `😺 Занятия пока-что ещё не начались.`,
+  after_study_day: `Можно наконец-токи вздохнуть 😌 
+Занятия кончились ❇️`,
+  time_info_main_body: `🗒 Часов и минут до конца:\n\n`,
+  until_study_day_end: `⏳ Учебного дня:`,
+  until_study_session_end: `⏳ Пары:`,
+  until_lesson_end: `⏳ Урока:`,
+  break_time: "Перемена!",
+  off_day: `Ура! Сегодня Выходной! 🥳`,
 };

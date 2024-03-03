@@ -1,5 +1,3 @@
-const { createReplyKeyboardLayout } = require("../lib/telegram");
-
 if (true) {
   describe("createReplyKeyboardLayout", () => {
     describe("Creates a buttons layout, where the number of buttons per row is equal to the number of cols", () => {

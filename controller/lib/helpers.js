@@ -1,7 +1,7 @@
 export default function errorHandler(error, funcName, from) {
   const loggerFunction = console.log;
 
-  loggerFunction("\n\n::::START::::");
+  loggerFunction("\n\n::::🪲START🪲::::");
   if (from === "axios") {
     loggerFunction("Error occured in " + funcName);
     if (error.response) {
@@ -15,7 +15,7 @@ export default function errorHandler(error, funcName, from) {
     }
     loggerFunction(error.toJSON());
   } else {
-    loggerFunction(`Error: ${error}\nError occured in: ${funcName}\nfile: ${from}`);
+    loggerFunction(`🔻 Error:\n`, error, `\n👉 Error was caught at: ${funcName}\n📁 file: ${from}`);
   }
   loggerFunction("::::END::::\n\n");
 }

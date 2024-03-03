@@ -1,63 +1,33 @@
 import { TIME } from "./constants.js";
-import { WEEKDAYS_RU } from "./constants.js";
 import errorHandler from "./helpers.js";
-import { getUserTimezoneHours } from "./firebase.js";
+import { parseTimeZone } from "./dataProcessing.js";
+import { isObject } from "./utils/typeChecking.js";
+import { parseTime } from "./dataProcessing.js";
 
-export function getLocalUnixTimestamp(timeZoneDiffSec = 0, unixTimestamp) {
-  if (!Number.isFinite(timeZoneDiffSec) || !Number.isFinite(unixTimestamp)) {
+export const getLocalTime = (localUnixTime) => {
+  if (!Number.isFinite(localUnixTime)) {
+    errorHandler("localUnixTime is expected to be a number", "getLocalTime", "time.js");
+    return null;
+  }
+  const timestamp = localUnixTime * TIME.sec_to_ms;
+  const localTime = new Date(timestamp);
+  return localTime;
+};
+export const getTimeFromUnixTime = (unixTime) => {
+  if (!Number.isFinite(unixTime)) {
     errorHandler(
-      "timeZoneDiffSec and unixTimestamp expected to be of type number",
-      "getLocalUnixTimestamp",
+      `localUnixTime is expected to be a number instead got this ${unixTime}`,
+      "getTimeFromUnixTime",
       "time.js"
     );
     return null;
   }
-
-  const localUnixTimestamp = unixTimestamp + timeZoneDiffSec;
-  return localUnixTimestamp;
-}
-
-export function getDate(unixTimestamp, dateString = "") {
-  if (!Number.isFinite(unixTimestamp)) {
-    errorHandler("unixTimestamp expected to be of type number", "getDate", "time.js");
-    return null;
-  }
-
-  const OFFSET = 1;
-  const timestamp = unixTimestamp * TIME.SEC_TO_MS;
-  let date = {};
-  if (dateString) {
-    date = new Date(dateString);
-  } else {
-    date = new Date(timestamp);
-  }
-  const day = Number(date.getUTCDate());
-  const month = Number(date.getUTCMonth()) + OFFSET;
-  const year = Number(date.getUTCFullYear());
-  const weekdayIndex = Number(date.getUTCDay());
-  const ms = Number(date.getTime());
-  const MIN_VAL = 10;
-  const time = {
-    unixTimestamp,
-    dateObj: date,
-    ms,
-    day,
-    month: month,
-    year,
-    weekday: WEEKDAYS_RU[weekdayIndex],
-    weekdays_eng: TIME.WEEKDAYS[weekdayIndex],
-    strDate: `${year}-${month < MIN_VAL ? "0" + month : month}-${day < MIN_VAL ? "0" + day : day}`,
-    reversedStrDate: `${day < MIN_VAL ? "0" + day : day}-${
-      month < MIN_VAL ? "0" + month : month
-    }-${year}`,
-  };
+  const timestamp = unixTime * TIME.sec_to_ms;
+  const time = new Date(timestamp);
   return time;
-}
-export function getDateUTC5(unixTimestamp) {
-  const timeZoneDiffsec = 5 * 3600;
-  return getDate(getLocalUnixTimestamp(timeZoneDiffsec, unixTimestamp));
-}
-export function calculateDateDiff(currentDate, docDate) {
+};
+
+export const calculateDateDiff = (currentDate, docDate) => {
   if (!(currentDate instanceof Date) || !(docDate instanceof Date)) {
     errorHandler(new TypeError("Date object is expected"), "calculateDateDiff", "time.js");
     return null;
@@ -101,106 +71,216 @@ export function calculateDateDiff(currentDate, docDate) {
     default:
       return WEEKDAYS_RU[docDate.getDay()];
   }
-}
-export function calculateLocalUnixTimestamp(chatId, unixTimestamp) {
-  if (typeof chatId !== "string") {
-    errorHandler(
-      "chatId is expected to be of type string",
-      "calculateLocalUnixTimestamp",
-      "time.js"
+};
+
+export const getSecSinceDayBegin = (unixTime) => {
+  if (!Number.isFinite(unixTime)) {
+    throw new TypeError(`unixTime was expected to be a number instead got this ${unixTime}`);
+  }
+  const timestamp = unixTime * TIME.sec_to_ms;
+  const date = new Date(timestamp); // we set the date to the timestamp which the local time
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
+  const timeElapsed = hours * TIME.hours_to_sec + minutes * TIME.min_to_sec;
+  return timeElapsed;
+};
+
+export const timeDiffWithinInterval = (timeSec, startInterval, endInterval) => {
+  if (
+    !Number.isFinite(timeSec) ||
+    !Number.isFinite(startInterval) ||
+    !Number.isFinite(endInterval)
+  ) {
+    throw new SyntaxError(
+      `timeSec, startInterval, endInterval were expected to be a number instead got this timeSec: ${timeSec}, startInterval: ${startInterval}, endInterval: ${endInterval}`
     );
-    return null;
   }
-  const hoursDiffFromUTC = getUserTimezoneHours(chatId);
-  if (!Number.isFinite(hoursDiffFromUTC)) {
-    errorHandler(
-      "userTimezone is expected to be of type number",
-      "calculateLocalUnixTimestamp",
-      "time.js"
+  if (timeSec < startInterval) {
+    return -1;
+  } else if (timeSec > endInterval) {
+    return 1;
+  }
+
+  const diff = endInterval - timeSec;
+  const hours = Math.floor(diff / TIME.hours_to_sec);
+  const minutes = Math.round((diff % TIME.hours_to_sec) / TIME.min_to_sec);
+
+  return {
+    hours,
+    minutes,
+  };
+};
+
+/**
+ * Checks if a study session duration in seconds is more or equal to the specified duration.
+ * @param {number} studySessionDurationSec - An expected duration of one study session in seconds.
+ * @param {number} startTimeSec - Start time of a study session in seconds.
+ * @param {number} endTimeSec - End time of a study session in seconds.
+ * @returns {boolean} Returns true if the study session meets or exceeds the expected duration, otherwise false.
+ */
+export const isStudySession = (studySessionDurationSec, startTimeSec, endTimeSec) => {
+  if (!Number.isFinite(studySessionDurationSec)) {
+    throw new TypeError(
+      `studySessionDurationSec was expected to be a number instead got this ${studySessionDurationSec}`
     );
-    return null;
-  }
-  const secondsDiffFromUTC = hoursDiffFromUTC * 3600;
-  const localUnixTimestamp = unixTimestamp + secondsDiffFromUTC;
-  return localUnixTimestamp;
-}
-
-export function getStudyTimeInfo(localUnixTimestamp, timeIntervals) {
-  if (!Array.isArray(timeIntervals)) {
-    errorHandler("timeIntervals is expected to an array", "getStudyTimeInfo", "time.js");
-    return null;
-  }
-  if (timeIntervals.length === 0) {
-    return "Можно отдыхать)";
-  }
-  const timestamp = localUnixTimestamp * TIME.SEC_TO_MS;
-
-  const localDate = new Date(timestamp);
-  localDate.setUTCHours(0, 0, 0, 0);
-
-  const dayStartUnixTimestamp = localDate.getTime() / TIME.SEC_TO_MS;
-  const endTime = timeIntervals.at(-1).at(-1);
-  const startTime = timeIntervals?.[0]?.[0];
-
-  const studyDayTimeLeft = getTimeDiffBetween(
-    dayStartUnixTimestamp,
-    localUnixTimestamp,
-    startTime,
-    endTime
-  );
-  if (studyDayTimeLeft?.isAfterLessons) {
-    return "Время отдыхать!";
-  } else if (studyDayTimeLeft?.isBeforeLessons) {
-    return "Ну вот, скоро новый день! Давайте попробуем улыбнуться!";
+  } else if (!Number.isFinite(startTimeSec)) {
+    throw new TypeError(
+      `startTimeSec was expected to be a number instead got this ${startTimeSec}`
+    );
+  } else if (!Number.isFinite(endTimeSec)) {
+    throw new TypeError(`endTimeSec was expected to be a number instead got this ${endTimeSec}`);
   }
 
-  const lessonTimeLeft = getTimeInfoOnLesson(
-    dayStartUnixTimestamp,
-    localUnixTimestamp,
-    timeIntervals
-  );
-  const hours = Math.floor(studyDayTimeLeft.hours);
-  const minutes = Math.ceil(studyDayTimeLeft.minutes);
-  return `
-До конца учебного дня: ${hours}ч ${Math.ceil(minutes)}мин
-До конца урока: ${lessonTimeLeft ? Math.ceil(lessonTimeLeft.minutes) + "мин" : "Перемена"} 
-  `;
-}
-export function getTimeInfoOnLesson(dayStartUnixTimestamp, localUnixTimestamp, timeIntervals) {
-  for (const [startTime, endTime] of timeIntervals) {
-    const time = getTimeDiffBetween(dayStartUnixTimestamp, localUnixTimestamp, startTime, endTime);
-    console.log(time);
-    if (Object.prototype.toString.call(time) === "[object Object]" && !time.outOfBounds) {
-      console.log(`${Math.floor(time.hours)}h ${Math.ceil(time.minutes)}min`);
-      return time;
+  const durationSec = endTimeSec - startTimeSec;
+
+  if (durationSec >= studySessionDurationSec) {
+    return true;
+  }
+
+  return false;
+};
+
+export const timeDiffWithinStudySession = (timeSeconds, studySchedule, studySessionDurationSec) => {
+  if (!Number.isFinite(timeSeconds)) {
+    throw new SyntaxError(
+      `timeSeconds was expected to be a number instead got this ${timeSeconds}`
+    );
+  } else if (!Array.isArray(studySchedule)) {
+    throw new SyntaxError(
+      `studySchedule was expected to be an array instead got this ${studySchedule}`
+    );
+  } else if (!Number.isFinite(studySessionDurationSec)) {
+    throw new SyntaxError(
+      `studySessionDurationSec was expected to be a number instead got this ${studySessionDurationSec}`
+    );
+  }
+
+  for (const studySession of studySchedule) {
+    const startTime = parseTime(studySession[0]);
+    const endTime = parseTime(studySession.at(-1));
+    const timeDiff = timeDiffWithinInterval(timeSeconds, startTime, endTime);
+
+    if (isObject(timeDiff)) {
+      console.log(
+        studySessionDurationSec,
+        endTime - startTime,
+        studySession[0],
+        studySession.at(-1)
+      );
+      if (!isStudySession(studySessionDurationSec, startTime, endTime)) {
+        break;
+      }
+      return timeDiff;
     }
   }
-  return false;
-}
-export function getTimeDiffBetween(dayStartUnixTimestamp, localUnixTimestamp, startTime, endTime) {
-  const [endTimeHours, endTimeMinutes] = endTime.split(":");
-  const diffSecEndTime = endTimeHours * TIME.HOUR_TO_SEC + endTimeMinutes * TIME.MIN_TO_SEC;
+  return {
+    hours: 0,
+    minutes: 0,
+  };
+};
 
-  const endTimePoint = dayStartUnixTimestamp + diffSecEndTime;
+export const calcStudySessionTime = (lessonMin = 45, breakMin = 0) => {
+  return 2 * lessonMin * TIME.min_to_sec + breakMin * TIME.min_to_sec;
+};
 
-  // defining endTimePoint
-  const [startTimeHours, startTimeMinutes] = startTime.split(":");
-  const diffSecStartTime = startTimeHours * TIME.HOUR_TO_SEC + startTimeMinutes * TIME.MIN_TO_SEC;
-  const startTimePoint = dayStartUnixTimestamp + diffSecStartTime;
-  // figuring out the diff
-  const timePointsDiff = endTimePoint - localUnixTimestamp;
+/**
+ * Calculates the difference between a given local time and multiple lesson intervals.
+ * Each lesson interval is defined by a start and end time string.
+ *
+ * @param {number} timeSeconds Local time in seconds since the beginning of the day.
+ * @param {...string} lessonsIntervals Pairs of strings representing the start and end times of lessons.
+ *                                       Times should be in the format 'HH:MM' (24-hour clock).
+ * @returns {Object} An object with 'hours' and 'minutes' representing the time difference
+ *                   if `timeSec` falls within one of the provided intervals. If `timeSec`
+ *                   is not within any intervals, returns an object with 'hours' and 'minutes'
+ *                   set to 0.
+ * @throws {TypeError} If `timeSec` is not a finite number, or if  any of the strings representing the start and end times, aren't a string time.
+ *
+ * @example
+ * // If the current time is 10:15 AM, represented as 36900 seconds
+ * // and there's a lesson from 10:00 AM to 11:00 AM
+ * timeDiffWithinLesson(36900, '10:00', '11:00');
+ * // returns { hours: 0, minutes: 15 }
+ */
+export const timeDiffWithinLesson = (timeSeconds, ...lessonsIntervals) => {
+  if (!Number.isFinite(timeSeconds)) {
+    throw new TypeError(`timeSeconds was expected to be a number instead got this ${timeSeconds}`);
+  }
+  const PAIR_INTERVAL = 2;
 
-  if (startTimePoint <= localUnixTimestamp && localUnixTimestamp <= endTimePoint) {
-    const hours = timePointsDiff / TIME.HOUR_TO_SEC;
-    const minutes = (timePointsDiff % TIME.HOUR_TO_SEC) / TIME.MIN_TO_SEC;
-    return {
-      hours,
-      minutes,
-    };
+  for (let i = 0; i < lessonsIntervals.length; i += PAIR_INTERVAL) {
+    const startTime = parseTime(lessonsIntervals[i]);
+    const endTime = parseTime(lessonsIntervals[i + 1]);
+    const timeDiff = timeDiffWithinInterval(timeSeconds, startTime, endTime);
+    if (isObject(timeDiff)) {
+      return timeDiff;
+    }
   }
   return {
-    outOfBounds: true,
-    isBeforeLessons: localUnixTimestamp < startTimePoint,
-    isAfterLessons: localUnixTimestamp > endTimePoint,
+    hours: 0,
+    minutes: 0,
   };
+};
+/**
+ * Calculates the time difference between the current time and study day, study session, lesson end times,
+ * if the current time falls within the given intervals range inclusive.
+ *
+ * @param {number} unixTime Time in seconds since 01.01.1970 00:00:00.
+ * @param {Array} studySchedule A 2D array where each subarray represents a study session.
+ * A study session is composed of lessons, which are just pairs of start and end times.
+ * The times are represented in the format 'HH:MM' (24-hour clock).
+ * @param {number} studySessionDurationSec Duration in seconds of one study session.
+ * @returns {Array} If time in seconds since the beginning of the day is less than the
+ * first study session start time should return an array with -1 ~[-1] (indicating the time is before study day start).
+ * Otherwise if time is after study session end time should return an array with 1 ~[1] (indicating the time is after study day end).
+ * If the time is within study day inclusive should return an array with three objects with props hours, minutes.
+ * @throws {SyntaxError} If `unixTime` is not a finite number, if `studySchedule` is not an array, if `studySessionDurationSec` is not a finite number, if flattened `studySchedule` is not of even length.
+ */
+export function getStudyTimeInfo(
+  unixTime,
+  studySchedule,
+  studySessionDurationSec = calcStudySessionTime()
+) {
+  if (!Number.isFinite(unixTime)) {
+    throw new SyntaxError(`unixTime was expected to be a number instead got this ${unixTime}`);
+  } else if (!Array.isArray(studySchedule)) {
+    throw new SyntaxError(
+      `studySchedule was expected to be an array instead got this ${studySchedule}`
+    );
+  } else if (!Number.isFinite(studySessionDurationSec)) {
+    throw new SyntaxError(
+      `studySessionDurationSec was expected to be a number instead got this ${studySessionTime}`
+    );
+  }
+
+  const flatStudySchedule = studySchedule.flat(Infinity);
+  if (flatStudySchedule.length === 0) {
+    return [0];
+  } else if (flatStudySchedule.length / 2 == 0) {
+    throw new SyntaxError("study schedule is expected to be of even length");
+  }
+
+  const secSinceDayBegin = getSecSinceDayBegin(unixTime);
+
+  const startTimeSec = parseTime(flatStudySchedule[0]);
+  const endTimeSec = parseTime(flatStudySchedule.at(-1));
+
+  const timeUntilStudyDayEnd = timeDiffWithinInterval(secSinceDayBegin, startTimeSec, endTimeSec);
+  const beforeStudyDayStart = -1;
+  const afterStudyDayEnd = 1;
+
+  if (timeUntilStudyDayEnd === beforeStudyDayStart) {
+    return [beforeStudyDayStart];
+  } else if (timeUntilStudyDayEnd === afterStudyDayEnd) {
+    return [afterStudyDayEnd];
+  }
+
+  const timeUntilStudySessionEnd = timeDiffWithinStudySession(
+    secSinceDayBegin,
+    studySchedule,
+    studySessionDurationSec
+  );
+  const timeUntilLessonEnd = timeDiffWithinLesson(secSinceDayBegin, ...flatStudySchedule);
+
+  return [timeUntilStudyDayEnd, timeUntilStudySessionEnd, timeUntilLessonEnd];
 }
