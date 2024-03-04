@@ -75,13 +75,13 @@ if (false) {
         `if time doesn't go beyond +-24 hours range inclusive, and 0 <= minutes < 60,
            then should return parsed time in seconds`,
         () => {
-          for (let h = 24; h >= -TIME.hours_per_day; --h) {
-            for (let m = 0; m < TIME.min_per_hour; ++m) {
+          for (let h = 24; h >= -TIME.hoursPerDay; --h) {
+            for (let m = 0; m < TIME.minutesPerHour; ++m) {
               let expectedValue = 0;
               if (h < 0) {
-                expectedValue = h * TIME.hours_to_sec - m * TIME.min_to_sec;
+                expectedValue = h * TIME.hoursToSeconds - m * TIME.minutesToSeconds;
               } else {
-                expectedValue = h * TIME.hours_to_sec + m * TIME.min_to_sec;
+                expectedValue = h * TIME.hoursToSeconds + m * TIME.minutesToSeconds;
               }
 
               const min = `${m < 10 && m > -10 ? "0" : ""}${m}`;
@@ -98,7 +98,7 @@ if (false) {
       describe("Special cases", () => {
         it("Should handle empty space", () => {
           const time = "7              :                        12";
-          const expectedValue = 7 * TIME.hours_to_sec + 12 * TIME.min_to_sec;
+          const expectedValue = 7 * TIME.hoursToSeconds + 12 * TIME.minutesToSeconds;
           assert.deepEqual(parseTime(time), expectedValue);
         });
       });
@@ -130,16 +130,16 @@ if (false) {
     describe(`Calculates time difference between timeC and timeB in sec, if timeC is
     in the interval between timeA and timeB inclusive, 
     returns an object with hours rouded down, minutes rounded to the nearest int`, () => {
-      const timeA = 8 * TIME.hours_to_sec;
-      const timeB = 14 * TIME.hours_to_sec + 40 * TIME.min_to_sec;
+      const timeA = 8 * TIME.hoursToSeconds;
+      const timeB = 14 * TIME.hoursToSeconds + 40 * TIME.minutesToSeconds;
 
-      for (let h = 0; h < TIME.hours_per_day; ++h) {
-        for (let m = 0; m < TIME.min_per_hour; ++m) {
+      for (let h = 0; h < TIME.hoursPerDay; ++h) {
+        for (let m = 0; m < TIME.minutesPerHour; ++m) {
           describe(`if timeC: ${h}:${
             m < 10 ? 0 : ""
           }${m}, is in the interval of timeA: 0${8}:00 and timeB: ${14}:${40}, should return 
           an object with props hours and minutes`, () => {
-            const timeC = h * TIME.hours_to_sec + m * TIME.min_to_sec;
+            const timeC = h * TIME.hoursToSeconds + m * TIME.minutesToSeconds;
 
             if (timeC < timeA) {
               it("timeC is less than timeA should return -1", () => {
@@ -157,8 +157,8 @@ if (false) {
             it("if timeC is in the interval between timeA and timeB inclusive should return an object ", () => {
               const timeDiff = timeB - timeC;
               const timeDiffObj = {
-                hours: Math.floor(timeDiff / TIME.hours_to_sec),
-                minutes: Math.round((timeDiff % TIME.hours_to_sec) / TIME.min_to_sec),
+                hours: Math.floor(timeDiff / TIME.hoursToSeconds),
+                minutes: Math.round((timeDiff % TIME.hoursToSeconds) / TIME.minutesToSeconds),
               };
               assert.deepEqual(
                 JSON.stringify(timeDiffWithinInterval(timeC, timeA, timeB)),
@@ -202,10 +202,10 @@ if (false) {
     describe("calculates seconds passed since the day beginning", () => {
       const endDay = 10;
       for (let day = 0; day < endDay; ++day) {
-        for (let h = 0; h < TIME.hours_per_day; ++h) {
-          for (let m = 0; m < TIME.min_per_hour; ++m) {
-            const dayBeginInSec = day * TIME.day_to_sec;
-            const offset = h * TIME.hours_to_sec + m * TIME.min_to_sec;
+        for (let h = 0; h < TIME.hoursPerDay; ++h) {
+          for (let m = 0; m < TIME.minutesPerHour; ++m) {
+            const dayBeginInSec = day * TIME.dayToSec;
+            const offset = h * TIME.hoursToSeconds + m * TIME.minutesToSeconds;
             const unixTime = dayBeginInSec + offset;
             it(`if unix time is ${unixTime} should return ${offset}`, () => {
               assert.deepEqual(getSecSinceDayBegin(unixTime), offset);
@@ -216,10 +216,10 @@ if (false) {
     });
     describe("Special cases", () => {
       it(`if unix time is 1708936931 should return ${
-        8 * TIME.hours_to_sec + 42 * TIME.min_to_sec
+        8 * TIME.hoursToSeconds + 42 * TIME.minutesToSeconds
       }`, () => {
         const unixTime = 1708936931; // February 26, 2024 8:42:11 AM
-        const expectedValue = 8 * TIME.hours_to_sec + 42 * TIME.min_to_sec;
+        const expectedValue = 8 * TIME.hoursToSeconds + 42 * TIME.minutesToSeconds;
         assert.deepEqual(getSecSinceDayBegin(unixTime), expectedValue);
       });
     });
@@ -252,8 +252,9 @@ if (true) {
         ];
 
         it("if time is before session start time should return object with props hours, minutes set to 0", () => {
-          const timeSeconds = 7 * TIME.hours_to_sec + 45 * TIME.min_to_sec; // 7:45 AM
-          const studySessionDurationSec = 2 * 45 * TIME.min_to_sec + 5 * TIME.min_to_sec;
+          const timeSeconds = 7 * TIME.hoursToSeconds + 45 * TIME.minutesToSeconds; // 7:45 AM
+          const studySessionDurationSec =
+            2 * 45 * TIME.minutesToSeconds + 5 * TIME.minutesToSeconds;
 
           const timeDiff = timeDiffWithinStudySession(
             timeSeconds,
@@ -263,8 +264,9 @@ if (true) {
           assert.deepEqual(JSON.stringify(timeDiff), JSON.stringify(expectedTimeDiff));
         });
         it("if time is after session end time should return object with props hours, minutes set to 0", () => {
-          const timeSeconds = 16 * TIME.hours_to_sec + 45 * TIME.min_to_sec; // 16:45 PM
-          const studySessionDurationSec = 2 * 45 * TIME.min_to_sec + 5 * TIME.min_to_sec;
+          const timeSeconds = 16 * TIME.hoursToSeconds + 45 * TIME.minutesToSeconds; // 16:45 PM
+          const studySessionDurationSec =
+            2 * 45 * TIME.minutesToSeconds + 5 * TIME.minutesToSeconds;
 
           const timeDiff = timeDiffWithinStudySession(
             timeSeconds,
@@ -293,7 +295,7 @@ if (true) {
 
             for (let i = 0; i < studySchedule.length; ++i) {
               for (let h = h_min; h < h_max; ++h) {
-                for (let m = 0; m < TIME.min_per_hour; ++m) {
+                for (let m = 0; m < TIME.minutesPerHour; ++m) {
                   const timeStartStr = studySchedule[i][0];
                   const timeEndStr = studySchedule.at(i).at(-1);
 
@@ -302,17 +304,17 @@ if (true) {
 
                   const zero_m = m < 10 ? "0" : "";
                   const zero_h = h < 10 ? "0" : "";
-                  const refTime = h * TIME.hours_to_sec + m * TIME.min_to_sec;
+                  const refTime = h * TIME.hoursToSeconds + m * TIME.minutesToSeconds;
 
                   if (timeStart <= refTime && refTime <= timeEnd) {
                     it(`when ${zero_h}${h}:${zero_m}${m} is range of ${timeStartStr} and ${timeEndStr} 
                     should return time diff obj with hours(rounded down) and minutes(rounded) `, () => {
                       const diff = timeEnd - refTime;
                       const studySessionDurationSec =
-                        2 * 45 * TIME.min_to_sec + 5 * TIME.min_to_sec;
+                        2 * 45 * TIME.minutesToSeconds + 5 * TIME.minutesToSeconds;
                       const timeDiff = {
-                        hours: Math.floor(diff / TIME.hours_to_sec),
-                        minutes: Math.round((diff % TIME.hours_to_sec) / TIME.min_to_sec),
+                        hours: Math.floor(diff / TIME.hoursToSeconds),
+                        minutes: Math.round((diff % TIME.hoursToSeconds) / TIME.minutesToSeconds),
                         isStudySession: true,
                       };
                       assert.deepEqual(
@@ -348,7 +350,7 @@ if (true) {
         const endTime = parseTime(studySchedule[0][1]); // start time is `8:15`, end time is `8:45`
 
         // 01:35 minutes duration of one study session including a break
-        const studySessionDurationSec = 2 * 45 * TIME.min_to_sec + 5 * TIME.min_to_sec;
+        const studySessionDurationSec = 2 * 45 * TIME.minutesToSeconds + 5 * TIME.minutesToSeconds;
 
         const timeDiff = timeDiffWithinStudySession(
           timeSeconds,
@@ -471,8 +473,8 @@ if (false) {
 
         for (let i = 0; i < studySchedule.length; i += PAIR_INTERVAL) {
           for (let h = START_HOUR; h < END_HOUR; ++h) {
-            for (let m = 0; m < TIME.min_per_hour; ++m) {
-              const timeSec = h * TIME.hours_to_sec + m * TIME.min_to_sec;
+            for (let m = 0; m < TIME.minutesPerHour; ++m) {
+              const timeSec = h * TIME.hoursToSeconds + m * TIME.minutesToSeconds;
 
               const startTimeStr = studySchedule.at(i);
               const endTimeStr = studySchedule.at(i + 1);
@@ -486,8 +488,8 @@ if (false) {
                 it(`should return a time diff object when time is within lesson range inclusive`, () => {
                   const diff = endTime - timeSec;
                   const expectedTimeDiff = {
-                    hours: Math.floor(diff / TIME.hours_to_sec),
-                    minutes: Math.round((diff % TIME.hours_to_sec) / TIME.min_to_sec),
+                    hours: Math.floor(diff / TIME.hoursToSeconds),
+                    minutes: Math.round((diff % TIME.hoursToSeconds) / TIME.minutesToSeconds),
                   };
                   const timeDiff = timeDiffWithinLesson(timeSec, ...studySchedule);
                   assert.deepEqual(JSON.stringify(timeDiff), JSON.stringify(expectedTimeDiff));
@@ -523,7 +525,7 @@ if (false) {
               minutes: 0,
             };
 
-            let timeSec = 8 * TIME.hours_to_sec + 46 * TIME.min_to_sec; // "8:46"
+            let timeSec = 8 * TIME.hoursToSeconds + 46 * TIME.minutesToSeconds; // "8:46"
             let startTimeStr = studySchedule[0]; //"8:00"
             let endTimeStr = studySchedule[1]; // "8:45"
 
@@ -531,7 +533,7 @@ if (false) {
 
             assert.deepEqual(JSON.stringify(timeDiff), JSON.stringify(expectedTimeDiff));
 
-            timeSec = 13 * TIME.hours_to_sec + 56 * TIME.min_to_sec; // "13:56"
+            timeSec = 13 * TIME.hoursToSeconds + 56 * TIME.minutesToSeconds; // "13:56"
             startTimeStr = studySchedule.at(-2); //"14:00"
             endTimeStr = studySchedule.at(-1); // "14:40"
 

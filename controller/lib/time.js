@@ -9,7 +9,7 @@ export const getLocalTime = (localUnixTime) => {
     errorHandler("localUnixTime is expected to be a number", "getLocalTime", "time.js");
     return null;
   }
-  const timestamp = localUnixTime * TIME.sec_to_ms;
+  const timestamp = localUnixTime * TIME.secondsToMs;
   const localTime = new Date(timestamp);
   return localTime;
 };
@@ -22,7 +22,7 @@ export const getTimeFromUnixTime = (unixTime) => {
     );
     return null;
   }
-  const timestamp = unixTime * TIME.sec_to_ms;
+  const timestamp = unixTime * TIME.secondsToMs;
   const time = new Date(timestamp);
   return time;
 };
@@ -77,11 +77,11 @@ export const getSecSinceDayBegin = (unixTime) => {
   if (!Number.isFinite(unixTime)) {
     throw new TypeError(`unixTime was expected to be a number instead got this ${unixTime}`);
   }
-  const timestamp = unixTime * TIME.sec_to_ms;
+  const timestamp = unixTime * TIME.secondsToMs;
   const date = new Date(timestamp); // we set the date to the timestamp which the local time
   const hours = date.getUTCHours();
   const minutes = date.getUTCMinutes();
-  const timeElapsed = hours * TIME.hours_to_sec + minutes * TIME.min_to_sec;
+  const timeElapsed = hours * TIME.hoursToSeconds + minutes * TIME.minutesToSeconds;
   return timeElapsed;
 };
 
@@ -102,8 +102,8 @@ export const timeDiffWithinInterval = (timeSec, startInterval, endInterval) => {
   }
 
   const diff = endInterval - timeSec;
-  const hours = Math.floor(diff / TIME.hours_to_sec);
-  const minutes = Math.round((diff % TIME.hours_to_sec) / TIME.min_to_sec);
+  const hours = Math.floor(diff / TIME.hoursToSeconds);
+  const minutes = Math.round((diff % TIME.hoursToSeconds) / TIME.minutesToSeconds);
 
   return {
     hours,
@@ -180,7 +180,7 @@ export const timeDiffWithinStudySession = (timeSeconds, studySchedule, studySess
 };
 
 export const calcStudySessionTime = (lessonMin = 45, breakMin = 0) => {
-  return 2 * lessonMin * TIME.min_to_sec + breakMin * TIME.min_to_sec;
+  return 2 * lessonMin * TIME.minutesToSeconds + breakMin * TIME.minutesToSeconds;
 };
 
 /**

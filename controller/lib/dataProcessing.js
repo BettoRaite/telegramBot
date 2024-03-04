@@ -1,6 +1,6 @@
 import { TIME } from "./constants.js";
 import { isObject } from "./utils/typeChecking.js";
-import { BOT_MESSAGES_LIST } from "./constants.js";
+import { BOT_MESSAGES } from "./constants.js";
 export function filterThisWeekdayStudySchedule(studySchedules, localTime) {
   if (!isObject(studySchedules)) {
     throw new TypeError(
@@ -55,15 +55,15 @@ export function parseTimeZone(timeZone) {
       `timeZone is expected to be in the format 'hh:mm' instead got this: ${timeZone}`
     );
   }
-  if (hours < 0 || hours >= TIME.hours_per_day) {
+  if (hours < 0 || hours >= TIME.hoursPerDay) {
     throw new SyntaxError(
       `hours difference is out of bounds, timeZone - (${hasMinus ? "-" : ""}${timeZone})`
     );
   }
-  if (minutes < 0 || minutes >= TIME.min_per_hour) {
+  if (minutes < 0 || minutes >= TIME.min_per_hourur) {
     throw new SyntaxError(`minutes difference is out of bounds, timeZone - (${timeZone})`);
   }
-  const offset = hours * TIME.hours_to_sec + minutes * TIME.min_to_sec;
+  const offset = hours * TIME.hoursToSeconds + minutes * TIME.minutesToSeconds;
   if (hasMinus) {
     return -offset;
   } else {
@@ -86,14 +86,14 @@ export function parseTime(time) {
 
   if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
     throw new SyntaxError(`time is expected to be in the format 'hh:mm' instead got this: ${time}`);
-  } else if (hours > TIME.hours_per_day || minutes < 0 || minutes >= TIME.min_per_hour) {
+  } else if (hours > TIME.hoursPerDay || minutes < 0 || minutes >= TIME.minutesPerHour) {
     throw new SyntaxError(
       `time is out of bounds, time - (${
         hasMinus ? "-" : ""
       }${time}). Hours must be <= +-24, minutes must be >= 0 and <= 59`
     );
   }
-  const parsedTime = hours * TIME.hours_to_sec + minutes * TIME.min_to_sec;
+  const parsedTime = hours * TIME.hoursToSeconds + minutes * TIME.minutesToSeconds;
 
   if (hasMinus) {
     return -parsedTime;
@@ -116,11 +116,11 @@ export const processTimeInfo = (timeInfo) => {
 
   switch (timeOnStudyDay) {
     case -1:
-      return BOT_MESSAGES_LIST.before_study_day;
+      return BOT_MESSAGES.studyDayNotStarted;
     case 1:
-      return BOT_MESSAGES_LIST.after_study_day;
+      return BOT_MESSAGES.studyDayFinished;
     case 0:
-      return BOT_MESSAGES_LIST.off_day;
+      return BOT_MESSAGES.todayIsOffDay;
   }
 
   isBreak = false;
@@ -133,7 +133,7 @@ export const processTimeInfo = (timeInfo) => {
     Number.isFinite(hoursSession) &&
     Number.isFinite(minutesSession)
   ) {
-    messages += `${BOT_MESSAGES_LIST.until_study_session_end} ${hoursSession}ч ${minutesSession}м \n\n`;
+    messages += `${BOT_MESSAGES.untilStudySessionEnd} ${hoursSession}ч ${minutesSession}м \n\n`;
   }
 
   const hoursLesson = timeOnLesson?.hours;
@@ -144,7 +144,7 @@ export const processTimeInfo = (timeInfo) => {
     Number.isFinite(hoursLesson) &&
     Number.isFinite(minutesLesson)
   ) {
-    messages += `${BOT_MESSAGES_LIST.until_lesson_end} ${hoursLesson}ч ${minutesLesson}м \n\n`;
+    messages += `${BOT_MESSAGES.untilLessonEnd} ${hoursLesson}ч ${minutesLesson}м \n\n`;
   } else {
     isBreak = true;
   }
@@ -153,11 +153,10 @@ export const processTimeInfo = (timeInfo) => {
   const minutes = timeOnStudyDay?.minutes;
   if ((hours > 0 || minutes > 0) && Number.isFinite(hours) && Number.isFinite(minutes)) {
     const mainPart =
-      BOT_MESSAGES_LIST.time_info_main_body +
-      `${BOT_MESSAGES_LIST.until_study_day_end} ${hours}ч ${minutes}м \n\n`;
+      BOT_MESSAGES.timeInfoHeader + `${BOT_MESSAGES.untilStudyDayEnd} ${hours}ч ${minutes}м \n\n`;
 
     if (isBreak) {
-      return mainPart + BOT_MESSAGES_LIST.break_time;
+      return mainPart + BOT_MESSAGES.breakTime;
     }
     return mainPart + messages;
   }

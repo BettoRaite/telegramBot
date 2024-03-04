@@ -6,7 +6,7 @@ import {
   filterThisWeekdayStudySchedule,
   processTimeInfo,
 } from "../lib/dataProcessing.js";
-import { BOT_MESSAGES_LIST } from "../lib/constants.js";
+import { BOT_MESSAGES } from "../lib/constants.js";
 import errorHandler from "../lib/helpers.js";
 
 if (false) {
@@ -161,11 +161,11 @@ if (true) {
         () => {
           it(`if first element in the array is -1 should return the given message: ${1}`, () => {
             const timeInfo = [-1];
-            assert.deepEqual(processTimeInfo(timeInfo), BOT_MESSAGES_LIST.before_study_day);
+            assert.deepEqual(processTimeInfo(timeInfo), BOT_MESSAGES.studyDayNotStarted);
           });
           it(`if first element in the array is -1 should return the given message: ${1}`, () => {
             const timeInfo = [1];
-            assert.deepEqual(processTimeInfo(timeInfo), BOT_MESSAGES_LIST.after_study_day);
+            assert.deepEqual(processTimeInfo(timeInfo), BOT_MESSAGES.studyDayFinished);
           });
         }
       );
@@ -173,9 +173,9 @@ if (true) {
         "when calculated difference between user time is in range of study day interval",
         () => {
           const expectedMessage = `
-          ${BOT_MESSAGES_LIST.until_study_day_end} 1ч 1м
-          ${BOT_MESSAGES_LIST.until_study_session_end} 1ч 1м
-          ${BOT_MESSAGES_LIST.until_lesson_end} 1ч 1м
+          ${BOT_MESSAGES.untilStudyDayEnd} 1ч 1м
+          ${BOT_MESSAGES.untilStudySessionEnd} 1ч 1м
+          ${BOT_MESSAGES.untilLessonEnd} 1ч 1м
           `;
           it(`if all objects with props hours, minutes in the array are not set to 0 should return the given message ${expectedMessage}`, () => {
             const timeDiff = {

@@ -3,7 +3,7 @@ import { sendMessage } from "./send.js";
 import { fetchUserGroupId, fetchDataOnGroup } from "./firebase.js";
 import { getStudyTimeInfo, getLocalTime } from "./time.js";
 import { filterThisWeekdayStudySchedule, processTimeInfo } from "./dataProcessing.js";
-import { COMMANDS, BOT_MESSAGES_LIST } from "./constants.js";
+import { COMMANDS, BOT_MESSAGES } from "./constants.js";
 import { isObject } from "./utils/typeChecking.js";
 
 const USER_ID = process.env.USER_ID;
@@ -79,7 +79,7 @@ export const handleTimeCommand = async (chatId, unixTime) => {
     const groupData = await handleGroupDataFetching(chatId);
     const { studySchedules, timeZoneOffsetSec } = groupData;
     if (!isObject(studySchedules)) {
-      sendMessage(chatId, BOT_MESSAGES_LIST.no_study_schedules);
+      sendMessage(chatId, BOT_MESSAGES.studyScheduleNotFound);
       return;
     }
 
@@ -120,20 +120,20 @@ export async function handleCommand(chatId, command, unixTime) {
           await sendMessage(chatId, "Отлично!", params);
           return;
         }
-        await sendMessage(chatId, BOT_MESSAGES_LIST.intro_text, params);
+        await sendMessage(chatId, BOT_MESSAGES.introText, params);
         return;
       }
       case COMMANDS.settings:
       case COMMANDS.schedule:
       case COMMANDS.setTime:
-        sendMessage(chatId, BOT_MESSAGES_LIST.unsupported);
+        sendMessage(chatId, BOT_MESSAGES.unsupported);
         return;
       case COMMANDS.time:
         handleTimeCommand(chatId, unixTime);
         return;
 
       default:
-        await sendMessage(chatId, BOT_MESSAGES_LIST.unknown_command);
+        await sendMessage(chatId, BOT_MESSAGES.unknownCommand);
         return;
     }
   } catch (error) {

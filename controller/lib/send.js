@@ -5,10 +5,7 @@ const MY_TOKEN = process.env.BOT_TOKEN;
 const BASE_URL = `https://api.telegram.org/bot${MY_TOKEN}`;
 const axiosInstance = getAxiosInstance(BASE_URL);
 
-export async function sendMessage(chatId, messageText, params = {}) {
-  const MY_TOKEN = process.env.BOT_TOKEN;
-  const BASE_URL = `https://api.telegram.org/bot${MY_TOKEN}`;
-  const axiosInstance = getAxiosInstance(BASE_URL);
+export const sendMessage = async (chatId, messageText, params = {}) => {
   if (!(params instanceof Object && !(params instanceof Array))) {
     errorHandler(TypeError("Params must be of type object"), "sendMessage", "axios");
     return;
@@ -30,4 +27,20 @@ export async function sendMessage(chatId, messageText, params = {}) {
   };
 
   await axiosInstance.get("sendMessage", sendMessageParams);
-}
+};
+
+export const sendStartMenu = async (chatId, menuText = MAIN_MENU_TEXT) => {
+  const params = {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: BTN_TEXT_GET_ACTION, callback_data: GET_ACTION },
+          { text: BTN_TEXT_UPLOAD_ACTION, callback_data: UPLOAD_ACTION },
+        ],
+      ],
+    },
+  };
+
+  await sendMessage(chatId, menuText, params);
+  return;
+};
