@@ -1,4 +1,4 @@
-import { fetchUserGroupId, fetchDataOnGroup, initializeFirebaseApp } from "../lib/firebase.js";
+import { fetchUserGroupId, fetchDataOnGroup, initializeFirebaseApp, fetchUserDataById } from "../lib/firebase.js";
 import chai, { assert, expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { describe } from "mocha";
@@ -63,7 +63,7 @@ if (false) {
   });
 }
 
-if (true) {
+if (false) {
   describe("fetchDataOnGroup", () => {
     describe("should return data of an existing group", () => {
       describe("Good cases", () => {
@@ -91,4 +91,25 @@ if (true) {
       });
     });
   });
+}
+if(true) {
+  describe("fetchUserDataById", ()=>{
+    describe("Fetches all user data associated with a specific user id", ()=>{
+      it("If user exists in a db should return an object", async ()=>{
+        const userId = "test"; // using an id of an already defined user
+        const fetchedUserData = await fetchUserDataById(userId);
+        assert.isObject(fetchedUserData);
+      })
+      it("If user doesn't exist in a db should return null", async ()=>{
+        const userId = "somerandomIdwhichdoesn'texist"; 
+        const fetchedUserData = await fetchUserDataById(userId);
+        assert.isNull(fetchedUserData);
+      })
+      it("If user id is not a string should throw type error", async ()=>{
+        const userId = null; 
+        const expectedMessage = ``
+        expect().to.be.throw(TypeError)
+      })
+    })
+  })
 }

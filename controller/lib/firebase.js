@@ -3,6 +3,7 @@ import { getFirestore, doc, setDoc, getDoc, collection } from "firebase/firestor
 import errorHandler from "./helpers.js";
 import { FIREBASE_COLLECTIONS, SUBJECT_NAMES } from "./constants.js";
 import { isObject } from "./utils/typeChecking.js";
+import { typeErrorFromTemplate } from "./utils/customErrors.js";
 import "dotenv/config.js";
 const {
   FIREBASE_API_KEY,
@@ -136,3 +137,48 @@ export const fetchGroupTimezone = async (groupName) => {
     const data = snapshot.data();
   }
 };
+/**
+ * Fetches all stored data associated with a specific user id. 
+ *
+ * @param {userId} userId A specific unique id of a user(telegram id).
+ * @returns {Object}  If user exist in firestore returns an object, containing all user data, otherwise
+ * null value.
+ * @throws {TypeError} If `userId` isn't a string
+ * @example
+ * If user belongs to the group '23-03' and is not an admin  
+ * fetchUserDataById(test)
+ * returns { groupId: "23-03", isAdmin: false }
+ */
+export const fetchUserDataById = async (userId) => {
+  if (typeof userId !== "string") {
+    throw typeErrorFromTemplate("userId","string", userId)
+  }
+  const docRef = doc(firestoreDb, FIREBASE_COLLECTIONS.users, userId);
+  const snapshot = await getDoc(docRef);
+  
+  if(snapshot.exists()) {
+    const userData = snapshot.data();
+    if(!isObject(userData)) {
+      return null;
+    }
+    return userData;
+  } else {
+    return null;
+  }
+}
+export const increaseCount = async(userId) => {
+  const user = fetchUserDataById(userId);
+  if(isObject(user)) {
+    ++user.timeFeatureUsageCount
+    // save user under specific id
+    return;
+  }
+  
+  const createdUser = {}; // add user 
+  createdUser.timeFeatureUsageCount = 1; // assign one
+  // save
+
+  return;
+  
+
+}

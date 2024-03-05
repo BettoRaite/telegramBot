@@ -70,27 +70,30 @@ export function parseTimeZone(timeZone) {
     return offset;
   }
 }
-export function parseTime(time) {
-  if (typeof time !== "string") {
-    throw new TypeError(`time is expected to be a string instead got this: ${time}`);
+
+
+
+export function parseTime(timeStr) {
+  if (typeof timeStr !== "string") {
+    throw new TypeError(`timeStr is expected to be a string instead got this: ${timeStr}`);
   }
   let hasMinus = false;
-  if (time.startsWith("-")) {
+  if (timeStr.startsWith("-")) {
     hasMinus = true;
-    time = time.slice(1);
+    timeStr = timeStr.slice(1);
   }
   const SEPARATOR = ":";
-  const [hoursStr, minutesStr] = time.split(SEPARATOR);
+  const [hoursStr, minutesStr] = timeStr.split(SEPARATOR);
   const hours = parseInt(hoursStr);
   const minutes = parseInt(minutesStr);
 
   if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
-    throw new SyntaxError(`time is expected to be in the format 'hh:mm' instead got this: ${time}`);
+    throw new SyntaxError(`time is expected to be in the format 'hh:mm' instead got this: ${timeStr}`);
   } else if (hours > TIME.hoursPerDay || minutes < 0 || minutes >= TIME.minutesPerHour) {
     throw new SyntaxError(
-      `time is out of bounds, time - (${
+      `timeStr is out of bounds, timeStr - (${
         hasMinus ? "-" : ""
-      }${time}). Hours must be <= +-24, minutes must be >= 0 and <= 59`
+      }${timeStr}). Hours must be <= +-24, minutes must be >= 0 and <= 59`
     );
   }
   const parsedTime = hours * TIME.hoursToSeconds + minutes * TIME.minutesToSeconds;
@@ -101,6 +104,9 @@ export function parseTime(time) {
     return parsedTime;
   }
 }
+
+
+
 export const processTimeInfo = (timeInfo) => {
   if (!Array.isArray(timeInfo)) {
     throw new TypeError(`timeInfo was expected to be an array instead got this ${timeInfo}`);
