@@ -10,12 +10,14 @@ export async function handleMessage(messageObj) {
     return;
   }
 
-  const chatId = String(messageObj.chat.id);
+  const userId = String(messageObj.chat.id);
   const unixTime = messageObj.date;
 
-  const COMMANDS_LIST = Object.values(COMMANDS);
+  const COMMANDS_LIST = Object.values(COMMANDS.custom);
+
   if (userMessage.startsWith("/") || COMMANDS_LIST.includes(userMessage)) {
     const command = userMessage;
-    return handleCommand(chatId, command, unixTime);
+    return handleCommand(userId, command, unixTime);
   }
+
 }

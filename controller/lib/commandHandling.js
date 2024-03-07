@@ -1,14 +1,14 @@
 import errorHandler from "./helpers.js";
-import { sendMessage } from "./send.js";
+import { sendMessage, sendStartMenu } from "./send.js";
 import { fetchUserGroupId, fetchDataOnGroup } from "./firebase.js";
 import { getStudyTimeInfo, getLocalTime } from "./time.js";
 import { filterThisWeekdayStudySchedule, processTimeInfo } from "./dataProcessing.js";
-import { COMMANDS, BOT_MESSAGES } from "./constants.js";
+import { COMMANDS, BOT_MESSAGES, MENU_TEXT } from "./constants.js";
 import { isObject } from "./utils/typeChecking.js";
 
 const USER_ID = process.env.USER_ID;
 
-export const createReplyKeyboardLayout = (cols, buttonsList) => {
+export const createReplyKeyboardLayout = (buttonsList, cols = 1, ) => {
   if (!Array.isArray(buttonsList)) {
     errorHandler(
       "buttonsList is expected to be an array",
@@ -20,6 +20,7 @@ export const createReplyKeyboardLayout = (cols, buttonsList) => {
     errorHandler("cols is expected to be an integer", "createReplyKeyboardLayout", "telegram.js");
     return null;
   }
+
   const buttonsListLen = buttonsList.length;
   const MIN_COLS = 1;
   const MAX_COLS = buttonsListLen;
@@ -102,12 +103,14 @@ export async function handleCommand(chatId, command, unixTime) {
     if (command.startsWith("/")) {
       command = command.slice(1).toLowerCase();
     }
+    console.log("handle command")
     switch (command) {
-      case COMMANDS.back:
-      case COMMANDS.start: {
+      case COMMANDS.custom.back:
+      case COMMANDS.default.start: {
+        
         const COLS = 2;
-        const buttons = [COMMANDS.schedule, COMMANDS.time, COMMANDS.settings, COMMANDS.setTime];
-        const keyboard = createReplyKeyboardLayout(COLS, buttons);
+        const buttons = [COMMANDS.custom.retrieveHomework, COMMANDS.custom.uploadHomework, COMMANDS.custom.schedule, COMMANDS.custom.time, COMMANDS.custom.settings];
+        const keyboard = createReplyKeyboardLayout(buttons, COLS);
         const params = {
           reply_markup: {
             keyboard,
@@ -116,19 +119,36 @@ export async function handleCommand(chatId, command, unixTime) {
             resize_keyboard: true,
           },
         };
-        if (command === COMMANDS.back) {
+
+        if (command === COMMANDS.custom.back) {
           await sendMessage(chatId, "Отлично!", params);
           return;
         }
+        
         await sendMessage(chatId, BOT_MESSAGES.introText, params);
+        await sendStartMenu(chatId)
         return;
       }
-      case COMMANDS.settings:
-      case COMMANDS.schedule:
-      case COMMANDS.setTime:
+      case COMMANDS.custom.settings: {
+        const buttons = [COMMANDS.custom.setTime,COMMANDS.custom.setSchedule, COMMANDS.custom.back];
+        const keyboard = createReplyKeyboardLayout(buttons);
+        const params = {
+          reply_markup: {
+            keyboard,
+            is_persistent: false,
+            one_time_keyboard: true,
+            resize_keyboard: true,
+          },
+        };
+
+        await sendMessage(chatId, MENU_TEXT.settings, params);
+        return;
+      }        
+      case COMMANDS.custom.schedule:
+      case COMMANDS.custom.setTime:
         sendMessage(chatId, BOT_MESSAGES.unsupported);
         return;
-      case COMMANDS.time:
+      case COMMANDS.custom.time:
         handleTimeCommand(chatId, unixTime);
         return;
 

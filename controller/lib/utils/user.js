@@ -1,6 +1,6 @@
-import { BOT_MESSAGES } from "../constants";
-import errorHandler from "../helpers";
-import { sendMessage, sendStartMenu } from "../send";
+import { BOT_MESSAGES } from "../constants.js";
+import errorHandler from "../helpers.js";
+import { sendMessage, sendStartMenu } from "../send.js";
 
 const users = new Map();
 

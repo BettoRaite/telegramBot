@@ -25,10 +25,21 @@ export const WEEKDAYS_RU = [
 ];
 
 export const ACTIONS = {
-  UPLOAD_ACTION: "upload-homework",
-  GET_ACTION: "get-homework",
-  SET_TIME_ACTION: "set-time",
+  uploadHomework: "upload-homework",
+  retrieveHomework: "retrieve-homework",
+  setTime: "set-time",
 };
+
+export const BUTTON_TEXT = {
+  uploadHomework: "Получить дз",
+  retrieveHomework: "Загрузить дз",
+  setTime: "Установить время",
+}
+export const MENU_TEXT = {
+  main: "Выберите одну из опций",  
+  settings: "Тут вы можете настроить как душа ваша пожелает", 
+}
+
 
 export const DATA_PREFIXES = {
   text: "text",
@@ -37,12 +48,20 @@ export const DATA_PREFIXES = {
 };
 
 export const COMMANDS = {
-  schedule: "🗒 Расписание",
-  time: "⏱ Время",
-  settings: "⚙️ Настройки",
-  setTime: "🔔 Звонки",
-  back: "🔙Обратно",
-  start: "start",
+  custom: {
+    retrieveHomework: "📚 Получить дз",
+    uploadHomework: "📝 Загрузить дз",
+    settings: "⚙️ Настройки",
+    time: "⏱ Время",
+    setTime: "🔔 Настроить звонки",
+    schedule: "🗒 Расписание",
+    setSchedule: "🗒 Настроить расписание",
+    back: "🔙Обратно",
+  },
+  default: {
+    start: "start",
+  }
+
 };
 
 export const TIME = {
