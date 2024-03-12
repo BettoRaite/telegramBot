@@ -1,3 +1,6 @@
-import { COMMANDS } from "../lib/constants.js";
+globalThis.alert = console.log;
 
-console.log(String(COMMANDS.custom));
+console.log(JSON.stringify([()=>{}], (key, value)=>{
+  if (typeof value === 'function') return 'function';
+  return value;
+}));

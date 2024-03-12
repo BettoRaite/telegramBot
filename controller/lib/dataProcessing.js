@@ -1,25 +1,25 @@
-import { TIME } from "./constants.js";
-import { isObject } from "./utils/typeChecking.js";
-import { BOT_MESSAGES } from "./constants.js";
+import {TIME} from './constants.js';
+import {isObject} from './utils/typeChecking.js';
+import {BOT_MESSAGES} from './constants.js';
 export function filterThisWeekdayStudySchedule(studySchedules, localTime) {
   if (!isObject(studySchedules)) {
     throw new TypeError(
-      `studySchedules was expected to be an object, instead got this ${studySchedules}`
+        `studySchedules was expected to be an object, instead got this ${studySchedules}`,
     );
   } else if (!(localTime instanceof Date)) {
     throw new TypeError(
-      `localTime was expected to be an instance of date, instead got this ${localTime}`
+        `localTime was expected to be an instance of date, instead got this ${localTime}`,
     );
   }
-  const defaultSchedule = "default";
+  const defaultSchedule = 'default';
 
   const weekdayIndex = localTime.getUTCDay();
   const weekday = TIME.weekdays[weekdayIndex];
   const scheduleOnSpecificDay = studySchedules[weekday];
 
-  let studySchedule = "";
+  let studySchedule = '';
 
-  if (typeof scheduleOnSpecificDay === "string") {
+  if (typeof scheduleOnSpecificDay === 'string') {
     studySchedule = JSON.parse(scheduleOnSpecificDay);
   } else {
     studySchedule = JSON.parse(studySchedules[defaultSchedule]);
@@ -29,35 +29,35 @@ export function filterThisWeekdayStudySchedule(studySchedules, localTime) {
     return studySchedule;
   } else {
     throw new TypeError(
-      `studySchedule was expected to be an array instead got this ${studySchedule}`
+        `studySchedule was expected to be an array instead got this ${studySchedule}`,
     );
   }
 }
 
 export function parseTimeZone(timeZone) {
-  if (typeof timeZone !== "string") {
+  if (typeof timeZone !== 'string') {
     // Default value of timeZone when creating a group should always be "00:00"
     // If user sets the time zone it should always be handled correctly, resulting in time zone of format 'hh:mm'
     throw new TypeError(`timeZone is expected to be a string instead got this: ${timeZone}`);
   }
   let hasMinus = false;
-  if (timeZone.startsWith("-")) {
+  if (timeZone.startsWith('-')) {
     hasMinus = true;
     timeZone = timeZone.slice(1);
   }
-  const SEPARATOR = ":";
+  const SEPARATOR = ':';
   const [hoursStr, minutesStr] = timeZone.split(SEPARATOR);
   const hours = parseInt(hoursStr);
   const minutes = parseInt(minutesStr);
 
   if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
     throw new SyntaxError(
-      `timeZone is expected to be in the format 'hh:mm' instead got this: ${timeZone}`
+        `timeZone is expected to be in the format 'hh:mm' instead got this: ${timeZone}`,
     );
   }
   if (hours < 0 || hours >= TIME.hoursPerDay) {
     throw new SyntaxError(
-      `hours difference is out of bounds, timeZone - (${hasMinus ? "-" : ""}${timeZone})`
+        `hours difference is out of bounds, timeZone - (${hasMinus ? '-' : ''}${timeZone})`,
     );
   }
   if (minutes < 0 || minutes >= TIME.min_per_hourur) {
@@ -72,17 +72,16 @@ export function parseTimeZone(timeZone) {
 }
 
 
-
 export function parseTime(timeStr) {
-  if (typeof timeStr !== "string") {
+  if (typeof timeStr !== 'string') {
     throw new TypeError(`timeStr is expected to be a string instead got this: ${timeStr}`);
   }
   let hasMinus = false;
-  if (timeStr.startsWith("-")) {
+  if (timeStr.startsWith('-')) {
     hasMinus = true;
     timeStr = timeStr.slice(1);
   }
-  const SEPARATOR = ":";
+  const SEPARATOR = ':';
   const [hoursStr, minutesStr] = timeStr.split(SEPARATOR);
   const hours = parseInt(hoursStr);
   const minutes = parseInt(minutesStr);
@@ -91,9 +90,9 @@ export function parseTime(timeStr) {
     throw new SyntaxError(`time is expected to be in the format 'hh:mm' instead got this: ${timeStr}`);
   } else if (hours > TIME.hoursPerDay || minutes < 0 || minutes >= TIME.minutesPerHour) {
     throw new SyntaxError(
-      `timeStr is out of bounds, timeStr - (${
-        hasMinus ? "-" : ""
-      }${timeStr}). Hours must be <= +-24, minutes must be >= 0 and <= 59`
+        `timeStr is out of bounds, timeStr - (${
+        hasMinus ? '-' : ''
+        }${timeStr}). Hours must be <= +-24, minutes must be >= 0 and <= 59`,
     );
   }
   const parsedTime = hours * TIME.hoursToSeconds + minutes * TIME.minutesToSeconds;
@@ -104,7 +103,6 @@ export function parseTime(timeStr) {
     return parsedTime;
   }
 }
-
 
 
 export const processTimeInfo = (timeInfo) => {
@@ -118,7 +116,7 @@ export const processTimeInfo = (timeInfo) => {
 
   let isBreak = false;
 
-  let messages = "";
+  let messages = '';
 
   switch (timeOnStudyDay) {
     case -1:

@@ -1,10 +1,10 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, getDoc, collection } from "firebase/firestore";
-import errorHandler from "./helpers.js";
-import { FIREBASE_COLLECTIONS, SUBJECT_NAMES } from "./constants.js";
-import { isObject } from "./utils/typeChecking.js";
-import { typeErrorFromTemplate } from "./utils/customErrors.js";
-import "dotenv/config.js";
+import {initializeApp} from 'firebase/app';
+import {getFirestore, doc, setDoc, getDoc, collection} from 'firebase/firestore';
+import errorHandler from './helpers.js';
+import {COLLECTION_NAME, FIREBASE_COLLECTIONS, SUBJECT_NAMES} from './constants.js';
+import {isObject} from './utils/typeChecking.js';
+import {typeErrorFromTemplate} from './utils/customErrors.js';
+import 'dotenv/config.js';
 const {
   FIREBASE_API_KEY,
   FIREBASE_AUTH_DOMAIN,
@@ -29,23 +29,24 @@ let firestoreDb;
 
 export const initializeFirebaseApp = () => {
   try {
-    console.log("Firebase app has been initialized!");
+    console.log('Firebase app has been initialized!');
     app = initializeApp(firebaseConfig);
     firestoreDb = getFirestore();
 
     return app;
   } catch (error) {
-    errorHandler(error, "initializeFirebaseApp", "firebase.js");
+    errorHandler(error, initializeFirebaseApp.name, 'firebase.js');
+    return null;
   }
 };
 export const initFirestoreDb = async () => {
   try {
     for (const subject of SUBJECT_NAMES) {
-      const subjectsRef = collection(firestoreDb, COLLECTION_NAME);
+      const subjectsRef = collection(firestoreDb, 'nope');
       await setDoc(doc(subjectsRef, subject), {});
     }
   } catch (error) {
-    errorHandler(error, "initFirestoreDb", "firebase.js");
+    errorHandler(error, initFirestoreDb.name, 'firebase.js');
   }
 };
 
@@ -53,7 +54,7 @@ export const getFirebaseApp = () => app;
 // TEST *DNN*
 export const uploadScheduleData = async (groupName, timeIntervalsArr) => {
   try {
-    const GROUPS_COLLECTION_NAME = "groups";
+    const GROUPS_COLLECTION_NAME = 'groups';
 
     const uploadData = {
       schedule: JSON.stringify(timeIntervalsArr),
@@ -64,14 +65,14 @@ export const uploadScheduleData = async (groupName, timeIntervalsArr) => {
 
     return uploadData;
   } catch (error) {
-    errorHandler(error, "uploadScheduleData", "firebase.js");
+    errorHandler(error, uploadScheduleData.name, 'firebase.js');
   }
 };
 
 export const fetchUserGroupId = async (userId) => {
-  if (typeof userId !== "string") {
+  if (typeof userId !== 'string') {
     // userId is not a string -> throw *DNN*
-    throw new TypeError("userId is expected to be a string");
+    throw new TypeError('userId is expected to be a string');
   }
 
   const docRef = doc(firestoreDb, FIREBASE_COLLECTIONS.users, userId);
@@ -82,18 +83,18 @@ export const fetchUserGroupId = async (userId) => {
     const data = snapshot.data();
     const groupId = data.groupId;
     // no group -> fatal error (user must be member of a group to use time feature) *DNN*
-    if (typeof groupId === "string") {
+    if (typeof groupId === 'string') {
       return groupId;
     }
-    throw new SyntaxError("user is not a member of any group");
+    throw new SyntaxError('user is not a member of any group');
   } else {
     // no such user -> fatal error *DNN*
-    throw new SyntaxError("user doesn't exist");
+    throw new SyntaxError('user doesn\'t exist');
   }
 };
 export const fetchDataOnGroup = async (groupId) => {
-  if (typeof groupId !== "string") {
-    throw new TypeError("groupId is expected to be a string");
+  if (typeof groupId !== 'string') {
+    throw new TypeError('groupId is expected to be a string');
   }
   const docRef = doc(firestoreDb, FIREBASE_COLLECTIONS.groups, groupId);
 
@@ -103,12 +104,12 @@ export const fetchDataOnGroup = async (groupId) => {
     const data = snapshot.data();
     return data;
   } else {
-    throw new SyntaxError("group doesn't exist");
+    throw new SyntaxError('group doesn\'t exist');
   }
 };
 export const fetchGroupStudySchedules = async (groupName) => {
-  if (typeof groupName !== "string") {
-    throw new TypeError("groupName is expected to be a string");
+  if (typeof groupName !== 'string') {
+    throw new TypeError('groupName is expected to be a string');
   }
   const docRef = doc(firestoreDb, FIREBASE_COLLECTIONS.groups, groupName);
 
@@ -123,13 +124,13 @@ export const fetchGroupStudySchedules = async (groupName) => {
     // schedule isn't set up, so return null, and ask the user to set it
     return null;
   } else {
-    throw new SyntaxError("no such group");
+    throw new SyntaxError('no such group');
   }
 };
 
 export const fetchGroupTimezone = async (groupName) => {
-  if (typeof groupName !== "string") {
-    throw new TypeError("groupName is expected to be a string");
+  if (typeof groupName !== 'string') {
+    throw new TypeError('groupName is expected to be a string');
   }
   const docRef = doc(firestoreDb, FIREBASE_COLLECTIONS.groups, groupName);
   const snapshot = await getDoc(docRef);
@@ -138,47 +139,45 @@ export const fetchGroupTimezone = async (groupName) => {
   }
 };
 /**
- * Fetches all stored data associated with a specific user id. 
+ * Fetches all stored data associated with a specific user id.
  *
  * @param {userId} userId A specific unique id of a user(telegram id).
- * @returns {Object}  If user exist in firestore returns an object, containing all user data, otherwise
+ * @return {Object}  If user exist in firestore returns an object, containing all user data, otherwise
  * null value.
  * @throws {TypeError} If `userId` isn't a string
  * @example
- * If user belongs to the group '23-03' and is not an admin  
+ * If user belongs to the group '23-03' and is not an admin
  * fetchUserDataById(test)
  * returns { groupId: "23-03", isAdmin: false }
  */
 export const fetchUserDataById = async (userId) => {
-  if (typeof userId !== "string") {
-    throw typeErrorFromTemplate("userId","string", userId)
+  if (typeof userId !== 'string') {
+    throw typeErrorFromTemplate('userId', 'string', userId);
   }
   const docRef = doc(firestoreDb, FIREBASE_COLLECTIONS.users, userId);
   const snapshot = await getDoc(docRef);
-  
-  if(snapshot.exists()) {
+
+  if (snapshot.exists()) {
     const userData = snapshot.data();
-    if(!isObject(userData)) {
+    if (!isObject(userData)) {
       return null;
     }
     return userData;
   } else {
     return null;
   }
-}
-export const increaseCount = async(userId) => {
+};
+export const increaseCount = async (userId) => {
   const user = fetchUserDataById(userId);
-  if(isObject(user)) {
-    ++user.timeFeatureUsageCount
+  if (isObject(user)) {
+    ++user.timeFeatureUsageCount;
     // save user under specific id
     return;
   }
-  
-  const createdUser = {}; // add user 
+
+  const createdUser = {}; // add user
   createdUser.timeFeatureUsageCount = 1; // assign one
   // save
 
   return;
-  
-
-}
+};

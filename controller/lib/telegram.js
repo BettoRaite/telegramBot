@@ -10,7 +10,7 @@ export async function handleMessage(messageObj) {
   const userMessage = messageObj.text ?? '';
 
   if (!userMessage) {
-    errorHandler('No message text', 'handleMessage', 'telegram.js');
+    errorHandler('No message text', handleMessage.name, 'telegram.js');
     return;
   }
 

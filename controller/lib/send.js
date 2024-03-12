@@ -14,7 +14,7 @@ export const sendMessage = async (chatId, messageText, params = {}) => {
   if (!(params instanceof Object && !(params instanceof Array))) {
     errorHandler(
         new TypeError('Params must be of type object'),
-        'sendMessage',
+        sendMessage.name,
         'axios');
     return;
   }

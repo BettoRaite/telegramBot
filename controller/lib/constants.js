@@ -1,3 +1,4 @@
+
 export const COLLECTION_NAME = 'subjects';
 // SUBJECT NAMES
 export const SUBJECT_NAMES = [
@@ -113,3 +114,18 @@ export const BOT_MESSAGES = {
   todayIsOffDay: `Ура! Сегодня Выходной! 🥳`,
   exceededUnresponseTime: 'Печально, но вы ничего не написали 🫠',
 };
+
+export const DATA_TYPES = {
+  number: 'a number',
+  string: 'a string',
+  boolean: 'a boolean',
+  undefined: 'an undefined',
+  null: 'a null',
+  bigint: 'a BigInt',
+  array: 'an array',
+  object: 'an object',
+  date: 'a date',
+  map: 'a map',
+  set: 'a set',
+};
+
