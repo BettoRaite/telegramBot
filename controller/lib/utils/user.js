@@ -2,7 +2,7 @@ import {BOT_MESSAGES} from '../constants.js';
 import errorHandler from '../helpers.js';
 import {sendMessage, sendStartMenu} from '../send.js';
 import {DATA_TYPES} from '../constants.js';
-import {typeErrorFromTemplate} from './customErrors.js';
+import {throwTypeErrorFromTemplate} from './customErrors.js';
 const users = new Map();
 /**
  * Caches a user, if not already present.
@@ -12,7 +12,7 @@ const users = new Map();
  */
 export const addUser = (userId) => {
   if (typeof userId !== 'string') {
-    throw typeErrorFromTemplate('userId', DATA_TYPES.string, userId);
+    throw throwTypeErrorFromTemplate('userId', DATA_TYPES.string, userId);
   }
 
   if (!users.has(userId)) {

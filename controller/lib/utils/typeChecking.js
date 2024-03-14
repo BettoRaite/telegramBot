@@ -14,7 +14,7 @@ export function isObject(val) {
  * @return {string} Returns a string representing the type of the `val`.
  */
 export function getDataType(val) {
-  return Object.prototype.toString.call(val);
+  return Object.prototype.toString.call(val).split(' ')?.at(1)?.slice(0, -1);
 }
 /**
  * Converts an object with a variable as a key to string.

@@ -3,7 +3,6 @@ import {getFirestore, doc, setDoc, getDoc, collection} from 'firebase/firestore'
 import errorHandler from './helpers.js';
 import {COLLECTION_NAME, FIREBASE_COLLECTIONS, SUBJECT_NAMES} from './constants.js';
 import {isObject} from './utils/typeChecking.js';
-import {typeErrorFromTemplate} from './utils/customErrors.js';
 import 'dotenv/config.js';
 const {
   FIREBASE_API_KEY,

@@ -116,16 +116,16 @@ export const BOT_MESSAGES = {
 };
 
 export const DATA_TYPES = {
-  number: 'a number',
-  string: 'a string',
-  boolean: 'a boolean',
-  undefined: 'an undefined',
-  null: 'a null',
-  bigint: 'a BigInt',
-  array: 'an array',
-  object: 'an object',
-  date: 'a date',
-  map: 'a map',
-  set: 'a set',
+  number: '[Number]',
+  string: '[String]',
+  boolean: '[Boolean]',
+  undefined: '[Undefined]',
+  null: '[Null]',
+  bigint: '[BigInt]',
+  array: '[Array]',
+  object: '[Object]',
+  date: '[Date]',
+  map: '[Map]',
+  set: '[Set]',
 };
 

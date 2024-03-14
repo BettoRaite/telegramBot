@@ -1,6 +1,24 @@
 globalThis.alert = console.log;
+import { throwTypeErrorFromTemplate } from "../lib/utils/customErrors.js";
 
-console.log(JSON.stringify([()=>{}], (key, value)=>{
-  if (typeof value === 'function') return 'function';
-  return value;
-}));
+const options = {
+  showHidden: true, // customizing the output.
+  compact: false,
+}
+const value  = {
+  someProp: ()=>{
+    console.log("Hello reader, how are you? I'm alright.");
+  }
+}
+throwTypeErrorFromTemplate('value', '[Number]',value, options);
+// TypeError: 
+// 
+// Variable: value
+// Expected type: [Number]
+// Error value type: [Object] 
+// Error value: {
+  // someProp: [Function: someProp] {
+    // [length]: 0,
+    // [name]: 'someProp'
+  // }
+// }
