@@ -26,8 +26,9 @@ throwTypeErrorFromTemplate('age', '[Number]', age);
 // Error value type: [Undefined]
 // Error value: undefined
  * @example
+// customizing the output.
 const options = {
-  showHidden: true, // customizing the output.
+  showHidden: true,
   compact: false,
 }
 const value  = {
