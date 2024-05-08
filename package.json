@@ -3,10 +3,10 @@
   "name": "telegrambot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./api/src/server.js",
   "scripts": {
-    "prod": "node index.js",
-    "dev": "nodemon index.js",
+    "prod": "node api/src/server.js",
+    "dev": "nodemon api/src/server.js",
     "ngrok": "node startNgrokAndSetWebhook.js",
     "test": "mocha --require @babel/register",
     "temp": "nodemon ./controller/tests/temp.test.js"
@@ -37,6 +37,7 @@
     "@babel/core": "^7.23.9",
     "@babel/preset-env": "^7.23.9",
     "@babel/register": "^7.23.7",
+    "@biomejs/biome": "^1.7.3",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
     "chai": "^4.4.1",
