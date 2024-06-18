@@ -1,36 +1,37 @@
 import "dotenv/config.js";
 import express from "express";
-import {
-	// eslint-disable-next-line no-unused-vars
-	initializeFirebaseApp,
-} from "./lib/firebase.js";
-import { handleRequest } from "./requestHandler.js";
-
+import { body, matchedData } from "express-validator";
+import helmet from "helmet";
+import morgan from "morgan";
+import handleMessageObject from "./lib/handleMessageObject.js";
+import { handleHeadersValidationErrors } from "./utils/handleValidationErrors.js";
+import validateHeaders from "./utils/validateHeaders.js";
 const PORT = process.env.PORT || 8080;
 const app = express();
 
+app.use(helmet());
+app.use(morgan("dev"));
 app.use(express.json());
 
-initializeFirebaseApp();
+app.post(
+	"/",
+	validateHeaders,
+	handleHeadersValidationErrors,
+	async (req, res) => {
+		handleMessageObject(req.body).then(() => {
+			console.log("Sent something to user.");
+		});
+		res.status(200).send({ msg: "OK" });
+	},
+);
 
-app.post("*", async (req, res) => {
-	console.log("POST request was made");
-	res.send(await handleRequest(req, "POST"));
-});
-
-app.get("*", async (req, res) => {
-	console.log("GET request was made");
-	res.send(await handleRequest(req, "GET"));
-});
-
-app.head("*", (req, res) => {
-	console.log("HEAD request was made");
-	res.status(200).send();
+app.use((req, res) => {
+	res.status(404).send({ msg: "No found" });
 });
 
 app.listen(PORT, (err) => {
 	if (err) {
-		console.log(err);
+		return console.error(err);
 	}
-	console.log("Server listening on PORT", PORT);
+	console.log(`Server listening on http://localhost:${PORT}`);
 });

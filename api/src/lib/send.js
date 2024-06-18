@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import getAxiosInstance from "./axios.js";
-import { createReplyKeyboardLayout } from "./commandHandling.js";
+import { createReplyKeyboardLayout } from "./handleCommand.js";
 import { ACTIONS, BOT_MESSAGES, BUTTON_TEXT, MENU_TEXT } from "./constants.js";
 import { COMMANDS, SUBJECT_NAMES } from "./constants.js";
 import errorHandler from "./helpers.js";
